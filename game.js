@@ -43,8 +43,8 @@ const skillsData = {
   soulMend: { name: "Soul Mend", desc: "Reduces deviation chance", cost: 5 }
 };
 
-// Load saved game
-window.onload = () => {
+// DOM Loaded
+document.addEventListener("DOMContentLoaded", function () {
   loadGame();
   updateDisplay();
 
@@ -52,7 +52,7 @@ window.onload = () => {
   let lastLoginTime = localStorage.getItem("lastLogin");
   if (!lastLoginTime) lastLoginTime = Date.now();
 
-  const timeOfflineSec = (Date.now() - lastLoginTime) / 1000; // seconds
+  const timeOfflineSec = (Date.now() - lastLoginTime) / 1000;
   const baseRate = 1;
   player.qi += timeOfflineSec * baseRate;
 
@@ -60,7 +60,7 @@ window.onload = () => {
   tryAutoBreakthrough();
   checkQuests();
   updateDisplay();
-};
+});
 
 // Manual Qi gain
 function gainQi(amount = 1) {
@@ -223,7 +223,10 @@ function updateDisplay() {
   const questLog = document.getElementById("questLog");
   questLog.innerHTML = "";
   quests.forEach(q => {
-    const status = q.completed ? "?" : "??";
-    questLog.innerHTML += `<div>${status} <strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
+    const status = q.completed ? "Completed" : "Locked";
+    questLog.innerHTML += `<div>[${status}] <strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
   });
 }
+
+// Optional: Auto-refresh display every second
+setInterval(updateDisplay, 1000);
