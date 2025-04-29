@@ -11,6 +11,7 @@ const cultivationStages = [
 ];
 
 const GAME_VERSION = "1.0.0";
+
 let player = {
   qi: 0,
   spirit: 1,
@@ -29,7 +30,9 @@ let player = {
   potionsBrewed: 0,
   achievements: []
 };
+
 let isMeditating = false;
+let meditationTimerId = null;
 
 let quests = [
   { title: "First Steps", completed: false, reward: 100, description: "Gain 500 Qi" },
@@ -47,16 +50,18 @@ document.addEventListener("DOMContentLoaded", function () {
   loadGame();
   updateDisplay();
 
-  let lastLoginTime = localStorage.getItem("lastLogin") || Date.now();
+  const lastLoginTime = parseInt(localStorage.getItem("lastLogin")) || Date.now();
   const timeOfflineSec = (Date.now() - lastLoginTime) / 1000;
   const baseRate = 1;
   player.qi += timeOfflineSec * baseRate;
 
   checkStage();
+  checkAchievements();
   tryAutoBreakthrough();
   checkQuests();
-  checkAchievements();
   updateDisplay();
+
+  localStorage.setItem("lastLogin", Date.now());
 });
 
 // Manual Qi gain
@@ -72,18 +77,18 @@ function gainQi(amount = 1) {
 
 // Meditation Mode
 function startMeditation() {
-  if (isMeditating) return;
+  if (isMeditating || meditationTimerId) return;
   isMeditating = true;
   showNotification("Entering meditation...");
 
   let duration = 0;
-  const meditationTimer = setInterval(() => {
+
+  meditationTimerId = setInterval(() => {
     duration++;
     gainQi(2);
 
     if (Math.random() < 0.01) {
-      clearInterval(meditationTimer);
-      isMeditating = false;
+      stopMeditation();
       player.qi -= 100;
       showNotification("Meditation deviation! Lost 100 Qi.");
       updateDisplay();
@@ -91,19 +96,23 @@ function startMeditation() {
     }
 
     if (duration >= 60) {
-      clearInterval(meditationTimer);
-      isMeditating = false;
+      stopMeditation();
       showNotification("Meditation complete!");
     }
   }, 1000);
 }
 
+function stopMeditation() {
+  clearInterval(meditationTimerId);
+  meditationTimerId = null;
+  isMeditating = false;
+}
+
 // Divine Tribulation
 function triggerTribulation() {
-  let strikes = 3;
   showNotification("A divine tribulation approaches!");
 
-  while (strikes > 0) {
+  for (let i = 0; i < 3; i++) {
     const dmg = Math.floor(Math.random() * 500);
     if (player.tribulationResistance > Math.random() * 10) {
       showNotification("Resisted heavenly bolt!");
@@ -111,7 +120,6 @@ function triggerTribulation() {
       player.qi -= dmg;
       showNotification(`Tribulation hit! Lost ${dmg} Qi.`);
     }
-    strikes--;
   }
 
   checkStage();
@@ -127,8 +135,8 @@ function brewPotion() {
     player.spirit += 1;
     showNotification("Brewed a spiritual potion! Your Spirit increased by 1.");
     checkQuests();
-    updateDisplay();
     checkAchievements();
+    updateDisplay();
   } else {
     showNotification("You need an herb to brew!");
   }
@@ -173,13 +181,13 @@ function checkStage() {
 
 // Auto breakthrough chance
 function tryAutoBreakthrough() {
-  const chance = Math.random();
   const nextStage = cultivationStages[player.currentStageIndex + 1];
-  if (nextStage && chance < 0.05 && player.qi >= nextStage.qiNeeded) {
+  if (nextStage && Math.random() < 0.05 && player.qi >= nextStage.qiNeeded) {
     player.currentStageIndex++;
     showNotification("A cosmic force stirs... You’ve broken through to " + nextStage.name + "!");
   }
 }
+setInterval(tryAutoBreakthrough, 30000); // Try every 30 seconds
 
 // Save game on page close
 window.onbeforeunload = () => {
@@ -237,7 +245,7 @@ function checkAchievements() {
 function checkQuests() {
   quests.forEach(quest => {
     if (!quest.completed) {
-      if (quest.description.includes("Gain") && player.qi >= 500) {
+      if (quest.description === "Gain 500 Qi" && player.qi >= 500) {
         quest.completed = true;
         player.spiritStones += quest.reward;
         showNotification(`Quest Completed: ${quest.title}!`);
@@ -268,7 +276,10 @@ function updateDisplay() {
   const leaderboardList = document.getElementById("leaderboard");
   const allPlayers = JSON.parse(localStorage.getItem("leaderboard") || "[]");
 
-  if (!allPlayers.some(p => p.name === "You")) {
+  const youIndex = allPlayers.findIndex(p => p.name === "You");
+  if (youIndex !== -1) {
+    allPlayers[youIndex].score = player.qi;
+  } else {
     allPlayers.push({ name: "You", score: player.qi });
   }
 
