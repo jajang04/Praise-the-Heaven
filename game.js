@@ -31,13 +31,16 @@ let player = {
     luckyCharm: false
   },
   potionsBrewed: 0,
-  achievements: []
+  achievements: [],
+  luckyHerbCount: 0,
+  tribulationSurvived: false
 };
 
 let isMeditating = false;
 let meditationTimerId = null;
 
 window.innerFocusUsed = false;
+window.qiSurgeUsed = false;
 
 let quests = [
   { title: "First Steps", completed: false, reward: 100, description: "Gain 500 Qi" },
@@ -83,6 +86,7 @@ function gainQi(amount = 1) {
 
   if (player.skills.qiSurge) {
     amount *= 3;
+    window.qiSurgeUsed = true;
   }
 
   player.qi += amount;
@@ -115,6 +119,7 @@ function startMeditation() {
     // Lucky Charm Effect
     if (player.skills.luckyCharm && Math.random() < 0.05) {
       player.inventory.push("herb");
+      player.luckyHerbCount++;
       showNotification("Lucky charm worked! You found an herb while meditating.");
     }
 
@@ -134,6 +139,8 @@ function stopMeditation() {
 function triggerTribulation() {
   showNotification("A divine tribulation approaches!");
 
+  player.tribulationSurvived = true; // Assume survival unless interrupted
+
   for (let i = 0; i < 3; i++) {
     const dmg = Math.floor(Math.random() * 500);
     if (player.tribulationResistance > Math.random() * 10) {
@@ -141,6 +148,7 @@ function triggerTribulation() {
     } else {
       player.qi -= dmg;
       showNotification(`Tribulation hit! Lost ${dmg} Qi.`);
+      player.tribulationSurvived = false; // Only mark as survivor if all survive
     }
   }
 
@@ -204,7 +212,7 @@ function tryAutoBreakthrough() {
     showNotification("A cosmic force stirs... You’ve broken through to " + nextStage.name + "!");
   }
 }
-setInterval(tryAutoBreakthrough, 30000);
+setInterval(tryAutoBreakthrough, 30000); // Every 30 seconds
 
 window.onbeforeunload = () => {
   localStorage.setItem("lastLogin", Date.now());
@@ -254,6 +262,31 @@ const achievementList = [
     name: "Strong Body Disciple",
     reward: 5,
     check: () => player.bodyStrength >= 5
+  },
+  {
+    name: "Qi Surge Master",
+    reward: 5,
+    check: () => window.qiSurgeUsed === true
+  },
+  {
+    name: "Body Tempering Beginner",
+    reward: 7,
+    check: () => player.bodyStrength >= 10
+  },
+  {
+    name: "Lucky Collector",
+    reward: 6,
+    check: () => player.luckyHerbCount >= 3
+  },
+  {
+    name: "Tribulation Survivor",
+    reward: 8,
+    check: () => player.tribulationSurvived === true
+  },
+  {
+    name: "Master Alchemist II",
+    reward: 12,
+    check: () => player.potionsBrewed >= 10
   }
 ];
 
