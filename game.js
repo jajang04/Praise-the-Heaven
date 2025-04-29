@@ -11,7 +11,7 @@ const cultivationStages = [
 ];
 
 const GAME_VERSION = "1.0.0";
-window.innerFocusUsed = false;
+
 let player = {
   qi: 0,
   spirit: 1,
@@ -37,6 +37,8 @@ let player = {
 let isMeditating = false;
 let meditationTimerId = null;
 
+window.innerFocusUsed = false;
+
 let quests = [
   { title: "First Steps", completed: false, reward: 100, description: "Gain 500 Qi" },
   { title: "Herbalist", completed: false, reward: 1, description: "Brew a potion" },
@@ -55,7 +57,6 @@ const skillsData = {
   luckyCharm: { name: "Lucky Charm", desc: "Increases rare drop chance", cost: 6 }
 };
 
-// DOM Loaded
 document.addEventListener("DOMContentLoaded", function () {
   loadGame();
   updateDisplay();
@@ -74,19 +75,24 @@ document.addEventListener("DOMContentLoaded", function () {
   localStorage.setItem("lastLogin", Date.now());
 });
 
-// Manual Qi gain
 function gainQi(amount = 1) {
   if (player.skills.innerFocus) {
     amount *= 2;
     window.innerFocusUsed = true;
   }
+
+  if (player.skills.qiSurge) {
+    amount *= 3;
+  }
+
+  player.qi += amount;
+
   checkStage();
   checkQuests();
   checkAchievements();
   updateDisplay();
 }
 
-// Meditation Mode
 function startMeditation() {
   if (isMeditating || meditationTimerId) return;
   isMeditating = true;
@@ -106,6 +112,12 @@ function startMeditation() {
       return;
     }
 
+    // Lucky Charm Effect
+    if (player.skills.luckyCharm && Math.random() < 0.05) {
+      player.inventory.push("herb");
+      showNotification("Lucky charm worked! You found an herb while meditating.");
+    }
+
     if (duration >= 60) {
       stopMeditation();
       showNotification("Meditation complete!");
@@ -119,7 +131,6 @@ function stopMeditation() {
   isMeditating = false;
 }
 
-// Divine Tribulation
 function triggerTribulation() {
   showNotification("A divine tribulation approaches!");
 
@@ -137,7 +148,6 @@ function triggerTribulation() {
   updateDisplay();
 }
 
-// Potion Crafting
 function brewPotion() {
   if (player.inventory.includes("herb")) {
     const index = player.inventory.indexOf("herb");
@@ -153,7 +163,6 @@ function brewPotion() {
   }
 }
 
-// Buy Item
 function buyItem(item) {
   if (player.spiritStones >= 1) {
     player.spiritStones--;
@@ -166,7 +175,6 @@ function buyItem(item) {
   }
 }
 
-// Unlock Skill
 function unlockSkill(skillName) {
   const skill = skillsData[skillName];
   if (!player.skills[skillName] && player.spiritStones >= skill.cost) {
@@ -179,7 +187,6 @@ function unlockSkill(skillName) {
   }
 }
 
-// Check stage advancement
 function checkStage() {
   while (
     player.currentStageIndex < cultivationStages.length - 1 &&
@@ -190,7 +197,6 @@ function checkStage() {
   }
 }
 
-// Auto breakthrough chance
 function tryAutoBreakthrough() {
   const nextStage = cultivationStages[player.currentStageIndex + 1];
   if (nextStage && Math.random() < 0.05 && player.qi >= nextStage.qiNeeded) {
@@ -198,15 +204,13 @@ function tryAutoBreakthrough() {
     showNotification("A cosmic force stirs... You’ve broken through to " + nextStage.name + "!");
   }
 }
-setInterval(tryAutoBreakthrough, 30000); // Try every 30 seconds
+setInterval(tryAutoBreakthrough, 30000);
 
-// Save game on page close
 window.onbeforeunload = () => {
   localStorage.setItem("lastLogin", Date.now());
   localStorage.setItem("playerData", JSON.stringify(player));
 };
 
-// Load saved game
 function loadGame() {
   const savedPlayer = localStorage.getItem("playerData");
   if (savedPlayer) {
@@ -214,7 +218,6 @@ function loadGame() {
   }
 }
 
-// Force Save
 function forceSave() {
   localStorage.setItem("playerData", JSON.stringify(player));
   const now = new Date().toLocaleTimeString();
@@ -222,7 +225,6 @@ function forceSave() {
   showNotification("Game saved manually!");
 }
 
-// Achievement system
 const achievementList = [
   {
     name: "First 100 Qi",
@@ -238,69 +240,23 @@ const achievementList = [
     name: "Master Alchemist",
     reward: 15,
     check: () => player.potionsBrewed >= 3
+  },
+  {
+    name: "Power Spike Master",
+    reward: 5,
+    check: () => {
+      const currentMin = cultivationStages[player.currentStageIndex].qiNeeded;
+      const nextMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
+      return player.qi - currentMin >= 1000 && player.qi < nextMin;
+    }
+  },
+  {
+    name: "Strong Body Disciple",
+    reward: 5,
+    check: () => player.bodyStrength >= 5
   }
 ];
-function activateQiSurge() {
-  if (!player.skills.qiSurge) {
-    showNotification("You haven't unlocked Qi Surge!");
-    return;
-  }
 
-  showNotification("Qi Surge activated! 3x Qi for 5 minutes.");
-  const originalGain = 1;
-  let timer = 300; // 5 minutes = 300 seconds
-
-  const interval = setInterval(() => {
-    gainQi(2 * 3); // Triple base gain
-    timer--;
-
-    if (timer <= 0) {
-      clearInterval(interval);
-      showNotification("Qi Surge has ended.");
-    }
-  }, 1000);
-}
-function activateBodyTempering() {
-  if (!player.skills.bodyTempering) {
-    showNotification("You haven't unlocked Body Tempering!");
-    return;
-  }
-
-  showNotification("Your body feels stronger...");
-  player.bodyStrength += 1;
-  updateDisplay();
-}
-function startMeditation() {
-  if (isMeditating || meditationTimerId) return;
-  isMeditating = true;
-  showNotification("Entering meditation...");
-
-  let duration = 0;
-
-  meditationTimerId = setInterval(() => {
-    duration++;
-    gainQi(2);
-
-    // Lucky Charm adds a small chance to find an herb
-    if (player.skills.luckyCharm && Math.random() < 0.05) {
-      player.inventory.push("herb");
-      showNotification("Lucky charm worked! You found an herb while meditating.");
-    }
-
-    if (Math.random() < 0.01) {
-      stopMeditation();
-      player.qi -= 100;
-      showNotification("Meditation deviation! Lost 100 Qi.");
-      updateDisplay();
-      return;
-    }
-
-    if (duration >= 60) {
-      stopMeditation();
-      showNotification("Meditation complete!");
-    }
-  }, 1000);
-}
 function checkAchievements() {
   achievementList.forEach(ach => {
     if (!player.achievements.includes(ach.name) && ach.check()) {
@@ -312,7 +268,6 @@ function checkAchievements() {
   updateDisplay();
 }
 
-// Check quest completion
 function checkQuests() {
   quests.forEach(quest => {
     if (!quest.completed) {
@@ -334,9 +289,9 @@ function checkQuests() {
           break;
 
         case "Power Spike":
-          const currentStageMin = cultivationStages[player.currentStageIndex].qiNeeded;
-          const nextStageMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
-          if (player.qi - currentStageMin >= 1000 && player.qi < nextStageMin) {
+          const currentMin = cultivationStages[player.currentStageIndex].qiNeeded;
+          const nextMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
+          if (player.qi - currentMin >= 1000 && player.qi < nextMin) {
             quest.completed = true;
             player.spiritStones += quest.reward;
             showNotification(`Quest Completed: ${quest.title}!`);
@@ -360,7 +315,6 @@ function checkQuests() {
           break;
 
         case "Master of Focus":
-          // Simulate using the skill via a flag
           if (window.innerFocusUsed) {
             quest.completed = true;
             player.spiritStones += quest.reward;
@@ -373,7 +327,6 @@ function checkQuests() {
   updateDisplay();
 }
 
-// Update UI
 function updateDisplay() {
   document.getElementById('qi').innerText = Math.floor(player.qi);
   document.getElementById('stage').innerText = cultivationStages[player.currentStageIndex].name;
@@ -385,7 +338,6 @@ function updateDisplay() {
   document.getElementById('lastSaved').innerText = localStorage.getItem("lastSave") || "Never";
   document.getElementById('version').innerText = GAME_VERSION;
 
-  // Update leaderboard
   const leaderboardList = document.getElementById("leaderboard");
   const allPlayers = JSON.parse(localStorage.getItem("leaderboard") || "[]");
 
@@ -404,19 +356,30 @@ function updateDisplay() {
     leaderboardList.innerHTML += `<li>${entry.name} – ${entry.score} Qi</li>`;
   });
 
-  // Update Quest Log
   const questLog = document.getElementById("questLog");
-  questLog.innerHTML = "";
-  quests.forEach(q => {
-    const status = q.completed ? "Completed" : "Locked";
-    questLog.innerHTML += `<div>[${status}] <strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
-  });
+  if (questLog) {
+    questLog.innerHTML = "";
+    quests.forEach(q => {
+      const status = q.completed ? "Completed" : "Locked";
+      questLog.innerHTML += `<div>[${status}] <strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
+    });
+  }
+
+  const achievementLog = document.getElementById("achievementLog");
+  if (achievementLog) {
+    achievementLog.innerHTML = "";
+    if (player.achievements.length === 0) {
+      achievementLog.innerHTML = "<li>No achievements yet.</li>";
+    } else {
+      player.achievements.forEach(ach => {
+        achievementLog.innerHTML += `<li>? ${ach}</li>`;
+      });
+    }
+  }
 }
 
-// Optional: Auto-refresh display every second
 setInterval(updateDisplay, 1000);
 
-// Custom Notification System
 function showNotification(message) {
   const notif = document.getElementById("notification");
   notif.innerText = message;
