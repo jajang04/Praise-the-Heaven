@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>?? Praise the Heaven</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>?? Praise the Heaven</h1>
+  </header>
+
+  <main>
+    <!-- Player Stats -->
+    <div class="card">
+      <h2>Stats</h2>
+      <p><strong>Stage:</strong> <span id="stage">Mortal</span></p>
+      <p><strong>Qi:</strong> <span id="qi">0</span></p>
+      <p><strong>Spirit:</strong> <span id="spirit">1</span></p>
+      <p><strong>Body Strength:</strong> <span id="bodyStrength">1</span></p>
+      <p><strong>Last Saved:</strong> <span id="lastSaved">Never</span></p>
+      <p><strong>Version:</strong> <span id="version">1.0.0</span></p>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <h2>Actions</h2>
+      <button onclick="gainQi()">Cultivate Manually</button>
+      <button onclick="startMeditation()">Enter Meditation</button>
+      <button onclick="brewPotion()">Brew Potion</button>
+      <button onclick="triggerTribulation()">Test Tribulation</button>
+      <button onclick="forceSave()">?? Save Progress</button>
+    </div>
+
+    <!-- Shop -->
+    <div class="card">
+      <h2>?? Spirit Market</h2>
+      <button onclick="buyItem('herb')">Buy Herb (1 Spirit Stone)</button>
+      <p><strong>Spirit Stones:</strong> <span id="spiritStones">0</span></p>
+      <p><strong>Inventory:</strong> <span id="inventory">None</span></p>
+      <span id="shopMessage"></span>
+    </div>
+
+    <!-- Skills -->
+    <div class="card">
+      <h2>?? Learn Skills</h2>
+      <button onclick="unlockSkill('innerFocus')">Inner Focus (3 Spirit Stones)</button>
+      <button onclick="unlockSkill('soulMend')">Soul Mend (5 Spirit Stones)</button>
+      <span id="skillMessage"></span>
+    </div>
+
+    <!-- Quest Log -->
+    <div class="card">
+      <h2>?? Quests</h2>
+      <div id="questLog"></div>
+    </div>
+  </main>
+
+  <footer>
+    Idle Cultivation RPG by YOU | Inspired by Xianxia Novels
+  </footer>
+
+  <script src="game.js"></script>
+</body>
+</html>
