@@ -1,23 +1,40 @@
 /* style.css - Modern dark theme with glowing text */
+
+:root {
+  --bg-color: #0a0a0a;
+  --card-bg: #1a1a1a;
+  --text-color: #0f0;
+  --accent-color: #0ff;
+  --border-color: #0f0;
+  --shadow-color: #0f044c;
+  --disabled-opacity: 0.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'Courier New', monospace;
-  background-color: #0a0a0a;
-  color: #0f0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 header {
   background: #111;
   padding: 20px;
   text-align: center;
-  border-bottom: 2px solid #0f0;
+  border-bottom: 2px solid var(--border-color);
 }
 
 h1 {
   margin: 0;
   font-size: 2em;
-  color: #0ff;
+  color: var(--accent-color);
 }
 
 main {
@@ -29,18 +46,18 @@ main {
 }
 
 .card {
-  background: #1a1a1a;
-  border: 1px solid #0f0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 15px;
   width: 300px;
-  box-shadow: 0 0 10px #0f044c;
+  box-shadow: 0 0 10px var(--shadow-color);
 }
 
 .card h2 {
   margin-top: 0;
   font-size: 1.2em;
-  color: #0f0;
+  color: var(--text-color);
 }
 
 .card p,
@@ -51,22 +68,29 @@ main {
 
 button {
   background: black;
-  border: 1px solid #0f0;
-  color: #0f0;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
   padding: 8px 12px;
   cursor: pointer;
   margin: 5px 0;
   width: 100%;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  font-family: inherit;
 }
 
 button:hover {
-  background: #0f0;
+  background: var(--text-color);
   color: black;
+  box-shadow: 0 0 8px var(--text-color);
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 5px var(--text-color), 0 0 10px var(--text-color);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: var(--disabled-opacity);
   cursor: not-allowed;
 }
 
@@ -83,6 +107,10 @@ footer {
   .card {
     width: 100%;
   }
+
+  h1 {
+    font-size: 1.5em;
+  }
 }
 
 /* Notification Box */
@@ -91,14 +119,15 @@ footer {
   bottom: 20px;
   right: 20px;
   background: #000;
-  border: 1px solid #0f0;
-  color: #0f0;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
   padding: 10px 20px;
   border-radius: 6px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, box-shadow 0.3s ease;
   z-index: 1000;
+  box-shadow: 0 0 10px var(--shadow-color);
 }
 
 .notification.show {
@@ -112,7 +141,7 @@ footer {
 }
 
 #achievementLog li {
-  color: #0f0;
+  color: var(--text-color);
   font-weight: bold;
   margin: 5px 0;
 }
