@@ -11,7 +11,7 @@ const cultivationStages = [
 ];
 
 const GAME_VERSION = "1.0.0";
-
+window.innerFocusUsed = false;
 let player = {
   qi: 0,
   spirit: 1,
@@ -25,7 +25,10 @@ let player = {
   skills: {
     basicCultivation: true,
     innerFocus: false,
-    soulMend: false
+    soulMend: false,
+    qiSurge: false,
+    bodyTempering: false,
+    luckyCharm: false
   },
   potionsBrewed: 0,
   achievements: []
@@ -36,13 +39,20 @@ let meditationTimerId = null;
 
 let quests = [
   { title: "First Steps", completed: false, reward: 100, description: "Gain 500 Qi" },
-  { title: "Herbalist", completed: false, reward: 1, description: "Brew a potion" }
+  { title: "Herbalist", completed: false, reward: 1, description: "Brew a potion" },
+  { title: "Power Spike", completed: false, reward: 2, description: "Reach 1000 Qi in one stage" },
+  { title: "Bodybuilder", completed: false, reward: 3, description: "Increase Body Strength to 5" },
+  { title: "Fortune Seeker", completed: false, reward: 2, description: "Use Lucky Charm or gain Luck" },
+  { title: "Master of Focus", completed: false, reward: 1, description: "Activate Inner Focus once" }
 ];
 
 const skillsData = {
   basicCultivation: { name: "Basic Cultivation", desc: "Base Qi gain +1/s" },
   innerFocus: { name: "Inner Focus", desc: "Double Qi gain for 5 minutes", cost: 3 },
-  soulMend: { name: "Soul Mend", desc: "Reduces deviation chance", cost: 5 }
+  soulMend: { name: "Soul Mend", desc: "Reduces deviation chance", cost: 5 },
+  qiSurge: { name: "Qi Surge", desc: "Triple Qi gain for 5 minutes", cost: 5 },
+  bodyTempering: { name: "Body Tempering", desc: "Boosts Body Strength over time", cost: 4 },
+  luckyCharm: { name: "Lucky Charm", desc: "Increases rare drop chance", cost: 6 }
 };
 
 // DOM Loaded
@@ -66,9 +76,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Manual Qi gain
 function gainQi(amount = 1) {
-  if (player.skills.innerFocus) amount *= 2;
-  player.qi += amount;
-
+  if (player.skills.innerFocus) {
+    amount *= 2;
+    window.innerFocusUsed = true;
+  }
   checkStage();
   checkQuests();
   checkAchievements();
@@ -229,7 +240,67 @@ const achievementList = [
     check: () => player.potionsBrewed >= 3
   }
 ];
+function activateQiSurge() {
+  if (!player.skills.qiSurge) {
+    showNotification("You haven't unlocked Qi Surge!");
+    return;
+  }
 
+  showNotification("Qi Surge activated! 3x Qi for 5 minutes.");
+  const originalGain = 1;
+  let timer = 300; // 5 minutes = 300 seconds
+
+  const interval = setInterval(() => {
+    gainQi(2 * 3); // Triple base gain
+    timer--;
+
+    if (timer <= 0) {
+      clearInterval(interval);
+      showNotification("Qi Surge has ended.");
+    }
+  }, 1000);
+}
+function activateBodyTempering() {
+  if (!player.skills.bodyTempering) {
+    showNotification("You haven't unlocked Body Tempering!");
+    return;
+  }
+
+  showNotification("Your body feels stronger...");
+  player.bodyStrength += 1;
+  updateDisplay();
+}
+function startMeditation() {
+  if (isMeditating || meditationTimerId) return;
+  isMeditating = true;
+  showNotification("Entering meditation...");
+
+  let duration = 0;
+
+  meditationTimerId = setInterval(() => {
+    duration++;
+    gainQi(2);
+
+    // Lucky Charm adds a small chance to find an herb
+    if (player.skills.luckyCharm && Math.random() < 0.05) {
+      player.inventory.push("herb");
+      showNotification("Lucky charm worked! You found an herb while meditating.");
+    }
+
+    if (Math.random() < 0.01) {
+      stopMeditation();
+      player.qi -= 100;
+      showNotification("Meditation deviation! Lost 100 Qi.");
+      updateDisplay();
+      return;
+    }
+
+    if (duration >= 60) {
+      stopMeditation();
+      showNotification("Meditation complete!");
+    }
+  }, 1000);
+}
 function checkAchievements() {
   achievementList.forEach(ach => {
     if (!player.achievements.includes(ach.name) && ach.check()) {
@@ -245,15 +316,57 @@ function checkAchievements() {
 function checkQuests() {
   quests.forEach(quest => {
     if (!quest.completed) {
-      if (quest.description === "Gain 500 Qi" && player.qi >= 500) {
-        quest.completed = true;
-        player.spiritStones += quest.reward;
-        showNotification(`Quest Completed: ${quest.title}!`);
-      }
-      if (quest.title === "Herbalist" && player.potionsBrewed >= 1) {
-        quest.completed = true;
-        player.spiritStones += quest.reward;
-        showNotification(`Quest Completed: ${quest.title}!`);
+      switch (quest.title) {
+        case "First Steps":
+          if (player.qi >= 500) {
+            quest.completed = true;
+            player.spiritStones += quest.reward;
+            showNotification(`Quest Completed: ${quest.title}!`);
+          }
+          break;
+
+        case "Herbalist":
+          if (player.potionsBrewed >= 1) {
+            quest.completed = true;
+            player.spiritStones += quest.reward;
+            showNotification(`Quest Completed: ${quest.title}!`);
+          }
+          break;
+
+        case "Power Spike":
+          const currentStageMin = cultivationStages[player.currentStageIndex].qiNeeded;
+          const nextStageMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
+          if (player.qi - currentStageMin >= 1000 && player.qi < nextStageMin) {
+            quest.completed = true;
+            player.spiritStones += quest.reward;
+            showNotification(`Quest Completed: ${quest.title}!`);
+          }
+          break;
+
+        case "Bodybuilder":
+          if (player.bodyStrength >= 5) {
+            quest.completed = true;
+            player.spiritStones += quest.reward;
+            showNotification(`Quest Completed: ${quest.title}!`);
+          }
+          break;
+
+        case "Fortune Seeker":
+          if (player.luck > 1 || player.inventory.includes("herb")) {
+            quest.completed = true;
+            player.spiritStones += quest.reward;
+            showNotification(`Quest Completed: ${quest.title}!`);
+          }
+          break;
+
+        case "Master of Focus":
+          // Simulate using the skill via a flag
+          if (window.innerFocusUsed) {
+            quest.completed = true;
+            player.spiritStones += quest.reward;
+            showNotification(`Quest Completed: ${quest.title}!`);
+          }
+          break;
       }
     }
   });

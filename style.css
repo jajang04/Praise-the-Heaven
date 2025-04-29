@@ -43,7 +43,8 @@ main {
   color: #0f0;
 }
 
-.card p, .card li {
+.card p,
+.card li {
   margin: 5px 0;
 }
 
@@ -101,4 +102,21 @@ footer {
 
 .notification.show {
   opacity: 1;
+}
+
+/* Achievement List Styling */
+#achievementLog {
+  list-style: none;
+  padding-left: 0;
+}
+
+#achievementLog li {
+  color: #0f0;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+#achievementLog li::before {
+  content: "? ";
+  color: gold;
 }

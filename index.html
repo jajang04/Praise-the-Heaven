@@ -22,7 +22,6 @@
       <p><strong>Body Strength:</strong> <span id="bodyStrength">1</span></p>
       <p><strong>Last Saved:</strong> <span id="lastSaved">Never</span></p>
       <p><strong>Version:</strong> <span id="version">1.0.0</span></p>
-      <!-- Fixed: Added missing span for inventory count -->
       <p><strong>Items:</strong> <span id="items">None</span></p>
     </div>
 
@@ -50,6 +49,9 @@
       <h2>Learn Skills</h2>
       <button onclick="unlockSkill('innerFocus')">Inner Focus (3 Spirit Stones)</button>
       <button onclick="unlockSkill('soulMend')">Soul Mend (5 Spirit Stones)</button>
+      <button onclick="unlockSkill('qiSurge')">Qi Surge (5 Spirit Stones)</button>
+      <button onclick="unlockSkill('bodyTempering')">Body Tempering (4 Spirit Stones)</button>
+      <button onclick="unlockSkill('luckyCharm')">Lucky Charm (6 Spirit Stones)</button>
       <span id="skillMessage"></span>
     </div>
 
@@ -65,6 +67,14 @@
     <div class="card">
       <h2>Quests</h2>
       <div id="questLog"></div>
+    </div>
+
+    <!-- Achievement Log -->
+    <div class="card">
+      <h2>Achievements</h2>
+      <ul id="achievementLog">
+        <li>No achievements yet.</li>
+      </ul>
     </div>
   </main>
 
