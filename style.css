@@ -43,6 +43,10 @@ main {
   color: #0f0;
 }
 
+.card p, .card li {
+  margin: 5px 0;
+}
+
 button {
   background: black;
   border: 1px solid #0f0;
@@ -59,10 +63,42 @@ button:hover {
   color: black;
 }
 
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 footer {
   text-align: center;
   padding: 15px;
   font-size: 0.9em;
   color: #666;
   border-top: 1px solid #222;
+}
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+  .card {
+    width: 100%;
+  }
+}
+
+/* Notification Box */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #000;
+  border: 1px solid #0f0;
+  color: #0f0;
+  padding: 10px 20px;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.notification.show {
+  opacity: 1;
 }

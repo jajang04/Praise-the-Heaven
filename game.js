@@ -27,7 +27,7 @@ let player = {
     soulMend: false
   },
   potionsBrewed: 0,
-  achievements: [] // ?? NEW!
+  achievements: []
 };
 let isMeditating = false;
 
@@ -47,10 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
   loadGame();
   updateDisplay();
 
-  // Offline gains
-  let lastLoginTime = localStorage.getItem("lastLogin");
-  if (!lastLoginTime) lastLoginTime = Date.now();
-
+  let lastLoginTime = localStorage.getItem("lastLogin") || Date.now();
   const timeOfflineSec = (Date.now() - lastLoginTime) / 1000;
   const baseRate = 1;
   player.qi += timeOfflineSec * baseRate;
@@ -58,6 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
   checkStage();
   tryAutoBreakthrough();
   checkQuests();
+  checkAchievements();
   updateDisplay();
 });
 
@@ -65,41 +63,37 @@ document.addEventListener("DOMContentLoaded", function () {
 function gainQi(amount = 1) {
   if (player.skills.innerFocus) amount *= 2;
   player.qi += amount;
+
   checkStage();
   checkQuests();
-  updateDisplay();
   checkAchievements();
+  updateDisplay();
 }
 
 // Meditation Mode
 function startMeditation() {
   if (isMeditating) return;
   isMeditating = true;
-  alert("Entering meditation...");
+  showNotification("Entering meditation...");
 
   let duration = 0;
   const meditationTimer = setInterval(() => {
     duration++;
-
-    player.qi += 2;
+    gainQi(2);
 
     if (Math.random() < 0.01) {
       clearInterval(meditationTimer);
       isMeditating = false;
       player.qi -= 100;
-      alert("Meditation deviation! Lost 100 Qi.");
+      showNotification("Meditation deviation! Lost 100 Qi.");
       updateDisplay();
       return;
     }
 
-    checkStage();
-    checkQuests();
-    updateDisplay();
-
     if (duration >= 60) {
       clearInterval(meditationTimer);
       isMeditating = false;
-      alert("Meditation complete!");
+      showNotification("Meditation complete!");
     }
   }, 1000);
 }
@@ -107,15 +101,15 @@ function startMeditation() {
 // Divine Tribulation
 function triggerTribulation() {
   let strikes = 3;
-  alert("A divine tribulation approaches!");
+  showNotification("A divine tribulation approaches!");
 
   while (strikes > 0) {
     const dmg = Math.floor(Math.random() * 500);
     if (player.tribulationResistance > Math.random() * 10) {
-      alert("Resisted heavenly bolt!");
+      showNotification("Resisted heavenly bolt!");
     } else {
       player.qi -= dmg;
-      alert("Tribulation hit! Lost " + dmg + " Qi.");
+      showNotification(`Tribulation hit! Lost ${dmg} Qi.`);
     }
     strikes--;
   }
@@ -131,12 +125,12 @@ function brewPotion() {
     player.inventory.splice(index, 1);
     player.potionsBrewed++;
     player.spirit += 1;
-    alert("Brewed a spiritual potion! Your Spirit increased by 1.");
+    showNotification("Brewed a spiritual potion! Your Spirit increased by 1.");
     checkQuests();
     updateDisplay();
     checkAchievements();
   } else {
-    alert("You need an herb to brew!");
+    showNotification("You need an herb to brew!");
   }
 }
 
@@ -145,7 +139,7 @@ function buyItem(item) {
   if (player.spiritStones >= 1) {
     player.spiritStones--;
     player.inventory.push(item);
-    alert("You bought an herb!");
+    showNotification("You bought an herb!");
     updateDisplay();
   } else {
     document.getElementById("shopMessage").innerText = "Not enough Spirit Stones!";
@@ -159,10 +153,10 @@ function unlockSkill(skillName) {
   if (!player.skills[skillName] && player.spiritStones >= skill.cost) {
     player.skills[skillName] = true;
     player.spiritStones -= skill.cost;
-    alert("You unlocked " + skill.name + "!");
+    showNotification("You unlocked " + skill.name + "!");
     updateDisplay();
   } else {
-    alert("Not enough Spirit Stones or already learned.");
+    showNotification("Not enough Spirit Stones or already learned.");
   }
 }
 
@@ -173,7 +167,7 @@ function checkStage() {
     player.qi >= cultivationStages[player.currentStageIndex + 1].qiNeeded
   ) {
     player.currentStageIndex++;
-    alert("You've ascended to " + cultivationStages[player.currentStageIndex].name + "!");
+    showNotification("You've ascended to " + cultivationStages[player.currentStageIndex].name + "!");
   }
 }
 
@@ -183,7 +177,7 @@ function tryAutoBreakthrough() {
   const nextStage = cultivationStages[player.currentStageIndex + 1];
   if (nextStage && chance < 0.05 && player.qi >= nextStage.qiNeeded) {
     player.currentStageIndex++;
-    alert("A cosmic force stirs... You’ve broken through to " + nextStage.name + "!");
+    showNotification("A cosmic force stirs... You’ve broken through to " + nextStage.name + "!");
   }
 }
 
@@ -204,28 +198,57 @@ function loadGame() {
 // Force Save
 function forceSave() {
   localStorage.setItem("playerData", JSON.stringify(player));
-  localStorage.setItem("lastSave", new Date().toLocaleTimeString());
-  alert("Game saved manually!");
+  const now = new Date().toLocaleTimeString();
+  localStorage.setItem("lastSave", now);
+  showNotification("Game saved manually!");
 }
-// achivements
+
+// Achievement system
+const achievementList = [
+  {
+    name: "First 100 Qi",
+    reward: 5,
+    check: () => player.qi >= 100
+  },
+  {
+    name: "Reached Foundation Stage",
+    reward: 10,
+    check: () => player.currentStageIndex >= 2
+  },
+  {
+    name: "Master Alchemist",
+    reward: 15,
+    check: () => player.potionsBrewed >= 3
+  }
+];
+
 function checkAchievements() {
-  if (player.qi >= 100 && !player.achievements.includes("First 100 Qi")) {
-    player.achievements.push("First 100 Qi");
-    player.spiritStones += 5;
-    alert("Achievement Unlocked: First 100 Qi! You earned 5 Spirit Stones.");
-  }
+  achievementList.forEach(ach => {
+    if (!player.achievements.includes(ach.name) && ach.check()) {
+      player.achievements.push(ach.name);
+      player.spiritStones += ach.reward;
+      showNotification("Achievement Unlocked: " + ach.name + "! You earned " + ach.reward + " Spirit Stones.");
+    }
+  });
+  updateDisplay();
+}
 
-  if (player.currentStageIndex >= 2 && !player.achievements.includes("Reached Foundation Stage")) {
-    player.achievements.push("Reached Foundation Stage");
-    player.spiritStones += 10;
-    alert("Achievement Unlocked: Reached Foundation Stage! You earned 10 Spirit Stones.");
-  }
-
-  if (player.potionsBrewed >= 3 && !player.achievements.includes("Master Alchemist")) {
-    player.achievements.push("Master Alchemist");
-    player.spiritStones += 15;
-    alert("Achievement Unlocked: Master Alchemist! You earned 15 Spirit Stones.");
-  }
+// Check quest completion
+function checkQuests() {
+  quests.forEach(quest => {
+    if (!quest.completed) {
+      if (quest.description.includes("Gain") && player.qi >= 500) {
+        quest.completed = true;
+        player.spiritStones += quest.reward;
+        showNotification(`Quest Completed: ${quest.title}!`);
+      }
+      if (quest.title === "Herbalist" && player.potionsBrewed >= 1) {
+        quest.completed = true;
+        player.spiritStones += quest.reward;
+        showNotification(`Quest Completed: ${quest.title}!`);
+      }
+    }
+  });
   updateDisplay();
 }
 
@@ -235,31 +258,28 @@ function updateDisplay() {
   document.getElementById('stage').innerText = cultivationStages[player.currentStageIndex].name;
   document.getElementById('spirit').innerText = player.spirit;
   document.getElementById('bodyStrength').innerText = player.bodyStrength;
-  document.getElementById('items').innerText = player.inventory.length || 'None';
+  document.getElementById('items').innerText = player.inventory.length ? player.inventory.length : 'None';
   document.getElementById('spiritStones').innerText = player.spiritStones;
   document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
   document.getElementById('lastSaved').innerText = localStorage.getItem("lastSave") || "Never";
   document.getElementById('version').innerText = GAME_VERSION;
-// Update leaderboard
-const leaderboardList = document.getElementById("leaderboard");
-const allPlayers = JSON.parse(localStorage.getItem("leaderboard") || "[]");
 
-// Add current player if not already there
-if (!allPlayers.some(p => p.name === "You")) {
-  allPlayers.push({ name: "You", score: player.qi });
-}
+  // Update leaderboard
+  const leaderboardList = document.getElementById("leaderboard");
+  const allPlayers = JSON.parse(localStorage.getItem("leaderboard") || "[]");
 
-// Sort by score descending
-allPlayers.sort((a, b) => b.score - a.score);
+  if (!allPlayers.some(p => p.name === "You")) {
+    allPlayers.push({ name: "You", score: player.qi });
+  }
 
-// Save updated list
-localStorage.setItem("leaderboard", JSON.stringify(allPlayers));
+  allPlayers.sort((a, b) => b.score - a.score);
+  localStorage.setItem("leaderboard", JSON.stringify(allPlayers));
 
-// Display top 5
-leaderboardList.innerHTML = "";
-allPlayers.slice(0, 5).forEach((entry, i) => {
-  leaderboardList.innerHTML += `<li>${entry.name} – ${entry.score} Qi</li>`;
-});
+  leaderboardList.innerHTML = "";
+  allPlayers.slice(0, 5).forEach(entry => {
+    leaderboardList.innerHTML += `<li>${entry.name} – ${entry.score} Qi</li>`;
+  });
+
   // Update Quest Log
   const questLog = document.getElementById("questLog");
   questLog.innerHTML = "";
@@ -271,3 +291,13 @@ allPlayers.slice(0, 5).forEach((entry, i) => {
 
 // Optional: Auto-refresh display every second
 setInterval(updateDisplay, 1000);
+
+// Custom Notification System
+function showNotification(message) {
+  const notif = document.getElementById("notification");
+  notif.innerText = message;
+  notif.classList.add("show");
+  setTimeout(() => {
+    notif.classList.remove("show");
+  }, 3000);
+}

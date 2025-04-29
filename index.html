@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Praise the Heaven</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -21,6 +22,8 @@
       <p><strong>Body Strength:</strong> <span id="bodyStrength">1</span></p>
       <p><strong>Last Saved:</strong> <span id="lastSaved">Never</span></p>
       <p><strong>Version:</strong> <span id="version">1.0.0</span></p>
+      <!-- Fixed: Added missing span for inventory count -->
+      <p><strong>Items:</strong> <span id="items">None</span></p>
     </div>
 
     <!-- Actions -->
@@ -49,13 +52,15 @@
       <button onclick="unlockSkill('soulMend')">Soul Mend (5 Spirit Stones)</button>
       <span id="skillMessage"></span>
     </div>
+
     <!-- Leaderboard -->
-<div class="card">
-  <h2>Top Cultivators</h2>
-  <ol id="leaderboard">
-    <li>Loading...</li>
-  </ol>
-</div>
+    <div class="card">
+      <h2>Top Cultivators</h2>
+      <ol id="leaderboard">
+        <li>Loading...</li>
+      </ol>
+    </div>
+
     <!-- Quest Log -->
     <div class="card">
       <h2>Quests</h2>
@@ -66,6 +71,9 @@
   <footer>
     Idle Cultivation RPG by YOU | Inspired by Xianxia Novels
   </footer>
+
+  <!-- Notification area for non-alert feedback -->
+  <div id="notification" class="notification"></div>
 
   <script src="game.js"></script>
 </body>
