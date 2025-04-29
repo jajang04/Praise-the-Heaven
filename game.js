@@ -11,7 +11,6 @@ const cultivationStages = [
 ];
 
 const GAME_VERSION = "1.0.0";
-
 let player = {
   qi: 0,
   spirit: 1,
@@ -27,9 +26,9 @@ let player = {
     innerFocus: false,
     soulMend: false
   },
-  potionsBrewed: 0
+  potionsBrewed: 0,
+  achievements: [] // ?? NEW!
 };
-
 let isMeditating = false;
 
 let quests = [
@@ -69,6 +68,7 @@ function gainQi(amount = 1) {
   checkStage();
   checkQuests();
   updateDisplay();
+  checkAchievements();
 }
 
 // Meditation Mode
@@ -134,6 +134,7 @@ function brewPotion() {
     alert("Brewed a spiritual potion! Your Spirit increased by 1.");
     checkQuests();
     updateDisplay();
+    checkAchievements();
   } else {
     alert("You need an herb to brew!");
   }
@@ -206,6 +207,27 @@ function forceSave() {
   localStorage.setItem("lastSave", new Date().toLocaleTimeString());
   alert("Game saved manually!");
 }
+// achivements
+function checkAchievements() {
+  if (player.qi >= 100 && !player.achievements.includes("First 100 Qi")) {
+    player.achievements.push("First 100 Qi");
+    player.spiritStones += 5;
+    alert("Achievement Unlocked: First 100 Qi! You earned 5 Spirit Stones.");
+  }
+
+  if (player.currentStageIndex >= 2 && !player.achievements.includes("Reached Foundation Stage")) {
+    player.achievements.push("Reached Foundation Stage");
+    player.spiritStones += 10;
+    alert("Achievement Unlocked: Reached Foundation Stage! You earned 10 Spirit Stones.");
+  }
+
+  if (player.potionsBrewed >= 3 && !player.achievements.includes("Master Alchemist")) {
+    player.achievements.push("Master Alchemist");
+    player.spiritStones += 15;
+    alert("Achievement Unlocked: Master Alchemist! You earned 15 Spirit Stones.");
+  }
+  updateDisplay();
+}
 
 // Update UI
 function updateDisplay() {
@@ -218,7 +240,26 @@ function updateDisplay() {
   document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
   document.getElementById('lastSaved').innerText = localStorage.getItem("lastSave") || "Never";
   document.getElementById('version').innerText = GAME_VERSION;
+// Update leaderboard
+const leaderboardList = document.getElementById("leaderboard");
+const allPlayers = JSON.parse(localStorage.getItem("leaderboard") || "[]");
 
+// Add current player if not already there
+if (!allPlayers.some(p => p.name === "You")) {
+  allPlayers.push({ name: "You", score: player.qi });
+}
+
+// Sort by score descending
+allPlayers.sort((a, b) => b.score - a.score);
+
+// Save updated list
+localStorage.setItem("leaderboard", JSON.stringify(allPlayers));
+
+// Display top 5
+leaderboardList.innerHTML = "";
+allPlayers.slice(0, 5).forEach((entry, i) => {
+  leaderboardList.innerHTML += `<li>${entry.name} – ${entry.score} Qi</li>`;
+});
   // Update Quest Log
   const questLog = document.getElementById("questLog");
   questLog.innerHTML = "";
