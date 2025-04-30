@@ -9,6 +9,7 @@ const cultivationStages = [
   { name: "Spirit Severing", qiNeeded: 25000 },
   { name: "Immortal Ascension", qiNeeded: 50000 }
 ];
+
 const GAME_VERSION = "1.0.0";
 
 let player = {
@@ -38,11 +39,18 @@ let player = {
 
 let isMeditating = false;
 let meditationTimerId = null;
-
 let skillCooldowns = {
   innerFocus: false,
   qiSurge: false
 };
+let currentEnemy = null;
+
+const enemyDatabase = [
+  { name: "Wolf Spirit", hp: 50, rewardQi: 100, rewardSpiritStones: 1 },
+  { name: "Corrupted Cultivator", hp: 100, rewardQi: 200, rewardSpiritStones: 2 },
+  { name: "Mountain Beast", hp: 200, rewardQi: 500, rewardSpiritStones: 3 },
+  { name: "Ancient Demon", hp: 500, rewardQi: 1000, rewardSpiritStones: 5 }
+];
 
 const quests = [
   { title: "First Steps", completed: false, reward: 100, description: "Gain 500 Qi" },
@@ -143,7 +151,93 @@ document.addEventListener("DOMContentLoaded", () => {
   updateDisplay();
   localStorage.setItem("lastLogin", Date.now());
   setupTooltips();
+
+  renderSkillButtons();
+
+  setInterval(() => {
+    if (player.skills.bodyTempering) {
+      player.bodyStrength += 0.01;
+    }
+  }, 1000);
+
+  setInterval(forceSave, 10000); // autosave
 });
+
+function renderSkillButtons() {
+  const skillList = document.getElementById("skillList");
+  if (!skillList) return;
+
+  skillList.innerHTML = "";
+
+  Object.keys(skillsData).forEach(skillName => {
+    const skill = skillsData[skillName];
+    if (player.skills[skillName]) {
+      const btn = document.createElement("button");
+      btn.textContent = `${skill.name} (Active)`;
+
+      if (skillCooldowns[skillName]) {
+        btn.disabled = true;
+        btn.classList.add("cooldown");
+        btn.setAttribute("data-cooldown", formatCooldown(getRemainingCooldown(skillName)));
+        startCooldownCounter(btn, skillName);
+      } else {
+        btn.onclick = () => activateSkill(skillName);
+      }
+
+      skillList.appendChild(btn);
+    } else {
+      const btn = document.createElement("button");
+      btn.innerText = `${skill.name} (${skill.cost} Spirit Stones)`;
+      btn.onclick = () => unlockSkill(skillName);
+      skillList.appendChild(btn);
+    }
+  });
+}
+
+function getRemainingCooldown(skillName) {
+  if (!player.skillCooldownEnd) return 0;
+  return Math.max(0, player.skillCooldownEnd[skillName] - Date.now());
+}
+
+function formatCooldown(ms) {
+  return `~${Math.ceil(ms / 1000)}s left`;
+}
+
+function startCooldownCounter(button, skillName) {
+  const interval = setInterval(() => {
+    const remaining = getRemainingCooldown(skillName);
+    if (remaining <= 0) {
+      clearInterval(interval);
+      button.classList.remove("cooldown");
+      button.removeAttribute("data-cooldown");
+      button.disabled = false;
+      button.innerText = skillsData[skillName].name + " (Active)";
+      button.onclick = () => activateSkill(skillName);
+    } else {
+      button.setAttribute("data-cooldown", formatCooldown(remaining));
+    }
+  }, 1000);
+}
+
+function activateSkill(skillName) {
+  const skill = skillsData[skillName];
+  if (!player.skills[skillName]) return showNotification("Skill not unlocked.");
+  if (skillCooldowns[skillName]) return showNotification(`${skill.name} is on cooldown.`);
+
+  skillCooldowns[skillName] = true;
+  player.skillCooldownEnd = player.skillCooldownEnd || {};
+  player.skillCooldownEnd[skillName] = Date.now() + 300000; // 5 minutes
+
+  showNotification(`${skill.name} activated!`);
+
+  if (skillName === 'innerFocus') {
+    setTimeout(() => { skillCooldowns.innerFocus = false; }, 300000);
+  } else if (skillName === 'qiSurge') {
+    setTimeout(() => { skillCooldowns.qiSurge = false; }, 300000);
+  }
+
+  renderSkillButtons();
+}
 
 function gainQi(amount = 1) {
   if (player.skills.innerFocus && !skillCooldowns.innerFocus) amount *= 2;
@@ -187,6 +281,7 @@ function stopMeditation() {
   clearInterval(meditationTimerId);
   meditationTimerId = null;
   isMeditating = false;
+  updateDisplay();
 }
 
 function triggerTribulation(force = false) {
@@ -249,6 +344,7 @@ function unlockSkill(skillName) {
     player.skills[skillName] = true;
     player.spiritStones -= skill.cost;
     showNotification("You unlocked " + skill.name + "!");
+    renderSkillButtons();
     updateDisplay();
   } else {
     showNotification("Not enough Spirit Stones or already learned.");
@@ -272,6 +368,7 @@ function tryAutoBreakthrough() {
     showNotification("A cosmic force stirs... You’ve broken through to " + nextStage.name + "!");
   }
 }
+
 setInterval(tryAutoBreakthrough, 30000); // Every 30 seconds
 
 window.onbeforeunload = () => {
@@ -281,12 +378,13 @@ window.onbeforeunload = () => {
 function loadGame() {
   const savedPlayer = localStorage.getItem("playerData");
   if (savedPlayer) player = JSON.parse(savedPlayer);
+  player.skillCooldownEnd = player.skillCooldownEnd || {};
 }
 
 function forceSave() {
-  localStorage.setItem("playerData", JSON.stringify(player));
   const now = new Date().toLocaleTimeString();
   localStorage.setItem("lastSave", now);
+  localStorage.setItem("playerData", JSON.stringify(player));
   showNotification("Game saved manually!");
 }
 
@@ -333,12 +431,72 @@ function checkQuests() {
   });
 }
 
+function updateBattleDisplay() {
+  if (currentEnemy) {
+    document.getElementById("currentEnemy").innerText = currentEnemy.name;
+    document.getElementById("enemyHP").innerText = Math.max(0, currentEnemy.currentHP);
+  } else {
+    document.getElementById("currentEnemy").innerText = "None";
+    document.getElementById("enemyHP").innerText = "0";
+  }
+}
+
+function encounterEnemy() {
+  if (isMeditating) {
+    showNotification("You cannot find enemies while meditating.");
+    return;
+  }
+  const randomEnemy = enemyDatabase[Math.floor(Math.random() * enemyDatabase.length)];
+  currentEnemy = {
+    ...randomEnemy,
+    currentHP: randomEnemy.hp
+  };
+  updateBattleDisplay();
+  document.getElementById("battleMessage").innerText = `You encountered a ${currentEnemy.name}!`;
+}
+
+function attackEnemy() {
+  if (!currentEnemy) {
+    showNotification("No enemy to attack.");
+    return;
+  }
+  let baseDamage = player.currentStageIndex * 10 + player.bodyStrength * 5;
+  if (skillCooldowns.qiSurge) baseDamage *= 2;
+  currentEnemy.currentHP -= baseDamage;
+  if (currentEnemy.currentHP <= 0) {
+    victory();
+  } else {
+    showNotification(`You hit the ${currentEnemy.name} for ${baseDamage} damage!`);
+    updateBattleDisplay();
+  }
+}
+
+function victory() {
+  showNotification(`Victory! You defeated the ${currentEnemy.name}.`);
+  player.qi += currentEnemy.rewardQi;
+  player.spiritStones += currentEnemy.rewardSpiritStones;
+  checkStage();
+  checkAchievements();
+  checkQuests();
+  updateDisplay();
+  document.getElementById("battleMessage").innerText =
+    `You gained ${currentEnemy.rewardQi} Qi and ${currentEnemy.rewardSpiritStones} Spirit Stones.`;
+  currentEnemy = null;
+  updateBattleDisplay();
+}
+
+function fleeFromBattle() {
+  showNotification(`You fled from the ${currentEnemy.name}.`);
+  currentEnemy = null;
+  updateBattleDisplay();
+}
+
 function updateDisplay() {
   document.getElementById('qi').innerText = Math.floor(player.qi);
   document.getElementById('stage').innerText = cultivationStages[player.currentStageIndex].name;
   document.getElementById('spirit').innerText = player.spirit;
   document.getElementById('bodyStrength').innerText = player.bodyStrength.toFixed(1);
-  document.getElementById('items').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
+  document.getElementById('tribulationResistance').innerText = player.tribulationResistance;
   document.getElementById('spiritStones').innerText = player.spiritStones;
   document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
   document.getElementById('lastSaved').innerText = localStorage.getItem("lastSave") || "Never";
@@ -363,10 +521,11 @@ function updateDisplay() {
   // Update Quest Log
   const questLog = document.getElementById("questLog");
   if (questLog) {
-    questLog.innerHTML = ""; // Clear previous content
+    questLog.innerHTML = "";
     quests.forEach(q => {
-      const status = q.completed ? "<span style='color:#0f0;font-weight:bold;'>Completed</span>" : "<span style='color:#666;'>Locked</span>";
-      questLog.innerHTML += `<div>[${status}] <strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
+      const statusClass = q.completed ? "completed" : "locked";
+      const statusText = q.completed ? "Completed" : "Locked";
+      questLog.innerHTML += `<div class="${statusClass}"><strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
     });
   }
 
@@ -382,7 +541,10 @@ function updateDisplay() {
       });
     }
   }
+
+  updateBattleDisplay();
 }
+
 setInterval(updateDisplay, 1000);
 setInterval(gainQi, 1000);
 
@@ -393,7 +555,7 @@ function showNotification(message) {
   setTimeout(() => notif.classList.remove("show"), 3000);
 }
 
-// == HELP SYSTEM ==
+// Tooltip Modal Help System
 function setupTooltips() {
   addTooltipClick(".card .achievementList li", (element) => {
     const name = element.textContent.trim().replace("? ", "");

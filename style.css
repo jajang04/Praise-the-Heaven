@@ -1,6 +1,6 @@
 :root {
   --bg-color: #0a0a0a;
-  --card-bg: #1a1a1a;
+  --card-bg: #1e1e1e;
   --text-color: #0f0;
   --accent-color: #0ff;
   --border-color: #0f0;
@@ -10,16 +10,15 @@
 
 * {
   box-sizing: border-box;
+  font-family: 'Courier New', monospace;
 }
 
 body {
-  font-family: 'Courier New', monospace;
   background-color: var(--bg-color);
   color: var(--text-color);
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
 }
 
 header {
@@ -36,19 +35,21 @@ h1 {
 }
 
 main {
+  max-width: 1200px;
+  margin: auto;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-around;
-  padding: 20px;
+  justify-content: center;
   gap: 20px;
+  padding: 20px;
 }
 
 .card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 15px;
-  width: 300px;
+  width: 320px;
   box-shadow: 0 0 10px var(--shadow-color);
   transition: transform 0.2s ease;
 }
@@ -60,13 +61,7 @@ main {
 .card h2 {
   margin-top: 0;
   font-size: 1.2em;
-  color: var(--text-color);
-}
-
-.card p,
-.card li,
-.card div {
-  margin: 5px 0;
+  color: var(--accent-color);
 }
 
 .questLog strong {
@@ -84,8 +79,8 @@ button {
   color: var(--text-color);
   padding: 8px 12px;
   cursor: pointer;
-  margin: 5px 0;
   width: 100%;
+  margin: 5px 0;
   transition: all 0.3s ease;
   font-family: inherit;
 }
@@ -106,22 +101,29 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.cooldown {
+  position: relative;
+}
+
+.cooldown::after {
+  content: attr(data-cooldown);
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  font-size: 0.8em;
+  color: red;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
 footer {
   text-align: center;
   padding: 15px;
   font-size: 0.9em;
   color: #666;
   border-top: 1px solid #222;
-}
-
-@media (max-width: 768px) {
-  .card {
-    width: 100%;
-  }
-
-  h1 {
-    font-size: 1.5em;
-  }
+  clear: both;
 }
 
 .notification {
@@ -144,11 +146,6 @@ footer {
   opacity: 1;
 }
 
-#achievementLog {
-  list-style: none;
-  padding-left: 0;
-}
-
 #achievementLog li {
   color: var(--text-color);
   font-weight: bold;
@@ -159,11 +156,6 @@ footer {
 #achievementLog li::before {
   content: "? ";
   color: gold;
-}
-
-#questLog div {
-  margin: 5px 0;
-  cursor: help;
 }
 
 .modal {
@@ -201,4 +193,15 @@ footer {
   font-size: 20px;
   cursor: pointer;
   color: #0f0;
+}
+
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .card {
+    width: 100%;
+  }
 }

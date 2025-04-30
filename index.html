@@ -11,7 +11,7 @@
 <body>
 
   <header>
-    <h1>Praise the Heaven</h1>
+    <h1>?? Praise the Heaven</h1>
   </header>
 
   <main>
@@ -30,26 +30,34 @@
     <!-- Actions -->
     <div class="card">
       <h2>Actions</h2>
-      <button onclick="gainQi()">Cultivate Manually</button>
-      <button onclick="startMeditation()">Enter Meditation</button>
-      <button onclick="brewPotion()">Brew Potion</button>
-      <button onclick="triggerTribulation()">Test Tribulation</button>
-      <button onclick="forceSave()">Save Progress</button>
+      <button onclick="gainQi()">?? Cultivate Manually</button>
+      <button onclick="startMeditation()" id="meditateBtn">?? Enter Meditation</button>
+      <button onclick="brewPotion()">?? Brew Potion</button>
+      <button onclick="triggerTribulation()">? Trigger Tribulation</button>
+      <button onclick="forceSave()">?? Save Progress</button>
+    </div>
+
+    <!-- Battle -->
+    <div class="card">
+      <h2>Battle Arena</h2>
+      <p><strong>Current Enemy:</strong> <span id="currentEnemy">None</span></p>
+      <p><strong>Enemy HP:</strong> <span id="enemyHP">0</span></p>
+      <button onclick="encounterEnemy()">?? Find Monster</button>
+      <button onclick="attackEnemy()">?? Attack</button>
+      <p id="battleMessage"></p>
     </div>
 
     <!-- Skill Panel -->
     <div class="card">
       <h2>Skills</h2>
-      <button onclick="unlockSkill('innerFocus')">Inner Focus (3 Spirit Stones)</button>
-      <button onclick="unlockSkill('qiSurge')">Qi Surge (5 Spirit Stones)</button>
-      <button onclick="unlockSkill('luckyCharm')">Lucky Charm (6 Spirit Stones)</button>
+      <div id="skillList"></div>
       <span id="skillMessage"></span>
     </div>
 
     <!-- Shop -->
     <div class="card">
       <h2>Spirit Market</h2>
-      <button onclick="buyItem('herb')">Buy Herb (1 Spirit Stone)</button>
+      <button onclick="buyItem('herb')">?? Buy Herb (1 Spirit Stone)</button>
       <p><strong>Spirit Stones:</strong> <span id="spiritStones">0</span></p>
       <p><strong>Inventory:</strong> <span id="inventory">None</span></p>
       <span id="shopMessage"></span>
@@ -76,23 +84,23 @@
         <li>No achievements yet.</li>
       </ul>
     </div>
-
-    <!-- Help Modal -->
-    <div id="helpModal" class="modal">
-      <div class="modal-content">
-        <span class="close-btn" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
-        <h3 id="modalTitle"></h3>
-        <p id="modalText"></p>
-      </div>
-    </div>
   </main>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
+      <h3 id="modalTitle"></h3>
+      <p id="modalText"></p>
+    </div>
+  </div>
+
+  <!-- Notification area for non-alert feedback -->
+  <div id="notification" class="notification"></div>
 
   <footer>
     Idle Cultivation RPG by Jajang | Inspired by Xianxia Novels
   </footer>
-
-  <!-- Notification area for non-alert feedback -->
-  <div id="notification" class="notification"></div>
 
   <script src="game.js"></script>
 </body>
