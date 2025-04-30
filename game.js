@@ -1,4 +1,4 @@
-// Cultivation Stages
+// Cultivation Stages (Expanded)
 const cultivationStages = [
   { name: "Mortal", qiNeeded: 0 },
   { name: "Essence Gathering", qiNeeded: 100 },
@@ -7,7 +7,10 @@ const cultivationStages = [
   { name: "Nascent Soul", qiNeeded: 5000 },
   { name: "Soul Transformation", qiNeeded: 10000 },
   { name: "Spirit Severing", qiNeeded: 25000 },
-  { name: "Immortal Ascension", qiNeeded: 50000 }
+  { name: "Immortal Ascension", qiNeeded: 50000 },
+  { name: "Divine Core", qiNeeded: 100000 },
+  { name: "Void Sovereign", qiNeeded: 250000 },
+  { name: "Eternal Dao", qiNeeded: 500000 }
 ];
 
 const GAME_VERSION = "1.0.0";
@@ -19,6 +22,9 @@ let player = {
   luck: 1,
   enlightenment: 1,
   tribulationResistance: 1,
+  karma: 0,
+  fate: 1,
+  divineInsight: 0,
   currentStageIndex: 0,
   inventory: [],
   spiritStones: 0,
@@ -34,7 +40,8 @@ let player = {
   achievements: [],
   luckyHerbCount: 0,
   tribulationSurvived: false,
-  lastTribulation: 0 // Timestamp of last major tribulation
+  lastTribulation: 0,
+  rebirthCount: 0
 };
 
 let isMeditating = false;
@@ -58,7 +65,8 @@ const quests = [
   { title: "Power Spike", completed: false, reward: 2, description: "Reach 1000 Qi in one stage" },
   { title: "Bodybuilder", completed: false, reward: 3, description: "Increase Body Strength to 5" },
   { title: "Fortune Seeker", completed: false, reward: 2, description: "Use Lucky Charm or gain Luck" },
-  { title: "Master of Focus", completed: false, reward: 1, description: "Activate Inner Focus once" }
+  { title: "Master of Focus", completed: false, reward: 1, description: "Activate Inner Focus once" },
+  { title: "Transcend Death", completed: false, reward: 5, description: "Reincarnate once" }
 ];
 
 const skillsData = {
@@ -134,11 +142,18 @@ const achievementList = [
     reward: 12,
     check: () => player.potionsBrewed >= 10,
     help: "Brew 10 potions successfully."
+  },
+  {
+    name: "Cycle Broken",
+    reward: 10,
+    check: () => player.rebirthCount >= 1,
+    help: "Break free from samsara and Reborn!"
   }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
   loadGame();
+  updateDisplay();
   const lastLoginTime = parseInt(localStorage.getItem("lastLogin")) || Date.now();
   const timeOfflineSec = (Date.now() - lastLoginTime) / 1000;
   const baseRate = 1;
@@ -154,6 +169,10 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(() => {
     if (player.skills.bodyTempering) {
       player.bodyStrength += 0.01;
+    }
+    if (player.fate > 1 && Math.random() < 0.01) {
+      player.spiritStones++;
+      showNotification("Fate brings you an extra Spirit Stone!");
     }
   }, 1000);
 
@@ -265,31 +284,10 @@ function unlockSkill(skillName) {
     player.skills[skillName] = true;
     player.spiritStones -= skill.cost;
     showNotification("You unlocked " + skill.name + "!");
-    renderSkillButtons();
     updateDisplay();
   } else {
     showNotification("Not enough Spirit Stones or already learned.");
   }
-}
-
-function renderSkillButtons() {
-  const skillList = document.getElementById("skillList");
-  if (!skillList) return;
-  skillList.innerHTML = "";
-  Object.keys(skillsData).forEach(skillName => {
-    const skill = skillsData[skillName];
-    if (player.skills[skillName]) {
-      const btn = document.createElement("button");
-      btn.textContent = `${skill.name} (Active)`;
-      btn.disabled = true;
-      skillList.appendChild(btn);
-    } else {
-      const btn = document.createElement("button");
-      btn.innerText = `${skill.name} (${skill.cost} Spirit Stones)`;
-      btn.onclick = () => unlockSkill(skillName);
-      skillList.appendChild(btn);
-    }
-  });
 }
 
 function checkStage() {
@@ -360,6 +358,9 @@ function checkQuests() {
         case "Master of Focus":
           if (skillCooldowns.innerFocus) quest.completed = true;
           break;
+        case "Transcend Death":
+          if (player.rebirthCount >= 1) quest.completed = true;
+          break;
       }
       if (quest.completed) {
         player.spiritStones += quest.reward;
@@ -369,68 +370,99 @@ function checkQuests() {
   });
 }
 
-function updateBattleDisplay() {
-  if (currentEnemy) {
-    document.getElementById("currentEnemy").innerText = currentEnemy.name;
-    document.getElementById("enemyHP").innerText = Math.max(0, currentEnemy.currentHP);
-  } else {
-    document.getElementById("currentEnemy").innerText = "None";
-    document.getElementById("enemyHP").innerText = "0";
-  }
-}
-
-function encounterEnemy() {
-  if (isMeditating) {
-    showNotification("You cannot find enemies while meditating.");
+function attemptRebirth() {
+  if (player.currentStageIndex < 7) {
+    showNotification("You must reach Immortal Ascension before attempting Rebirth.");
     return;
   }
-  const randomEnemy = enemyDatabase[Math.floor(Math.random() * enemyDatabase.length)];
-  currentEnemy = {
-    ...randomEnemy,
-    currentHP: randomEnemy.hp
-  };
-  updateBattleDisplay();
-  document.getElementById("battleMessage").innerText = `You encountered a ${currentEnemy.name}!`;
-}
 
-function attackEnemy() {
-  if (!currentEnemy) {
-    showNotification("No enemy to attack.");
+  if (confirm("Are you sure you wish to reincarnate? This will reset progress but grant permanent benefits.")) {
+    player.rebirthCount++;
+
+    const bonusSpiritStones = Math.floor(player.spiritStones * 0.1) + player.rebirthCount * 5;
+    const bonusQi = Math.floor(player.qi * 0.05) + player.rebirthCount * 100;
+
+    player = {
+      qi: bonusQi,
+      spirit: player.spirit,
+      bodyStrength: 1.5,
+      luck: player.luck,
+      enlightenment: player.enlightenment,
+      tribulationResistance: player.tribulationResistance + 0.1,
+      karma: player.karma - Math.floor(player.rebirthCount / 5),
+      fate: player.fate + 0.1,
+      divineInsight: player.divineInsight + Math.random(),
+      currentStageIndex: 0,
+      inventory: [],
+      spiritStones: bonusSpiritStones,
+      skills: player.skills,
+      potionsBrewed: 0,
+      achievements: player.achievements,
+      luckyHerbCount: 0,
+      tribulationSurvived: false,
+      lastTribulation: 0,
+      rebirthCount: player.rebirthCount
+    };
+
+    showNotification("You have been reborn! Your soul has grown stronger.");
+    checkAchievements();
+    checkQuests();
+    updateDisplay();
+  }
+}
+function attemptRebirth() {
+  if (player.currentStageIndex < 7) {
+    showNotification("You must reach Immortal Ascension before attempting Rebirth.");
     return;
   }
-  let baseDamage = player.currentStageIndex * 10 + player.bodyStrength * 5;
-  if (skillCooldowns.qiSurge) baseDamage *= 2;
-  currentEnemy.currentHP -= baseDamage;
-  if (currentEnemy.currentHP <= 0) {
-    victory();
-  } else {
-    showNotification(`You hit the ${currentEnemy.name} for ${baseDamage} damage!`);
-    updateBattleDisplay();
+
+  if (confirm("Are you sure you wish to reincarnate? This will reset progress but grant permanent benefits.")) {
+    player.rebirthCount++;
+
+    const bonusSpiritStones = Math.floor(player.spiritStones * 0.1) + player.rebirthCount * 5;
+    const bonusQi = Math.floor(player.qi * 0.05) + player.rebirthCount * 100;
+
+    player = {
+      qi: bonusQi,
+      spirit: player.spirit,
+      bodyStrength: 1.5,
+      luck: player.luck,
+      enlightenment: player.enlightenment,
+      tribulationResistance: player.tribulationResistance + 0.1,
+      karma: player.karma - Math.floor(player.rebirthCount / 5),
+      fate: player.fate + 0.1,
+      divineInsight: player.divineInsight + Math.random(),
+      currentStageIndex: 0,
+      inventory: [],
+      spiritStones: bonusSpiritStones,
+      skills: player.skills,
+      potionsBrewed: 0,
+      achievements: player.achievements,
+      luckyHerbCount: 0,
+      tribulationSurvived: false,
+      lastTribulation: 0,
+      rebirthCount: player.rebirthCount
+    };
+
+    showNotification("You have been reborn! Your soul has grown stronger.");
+    checkAchievements();
+    checkQuests();
+    updateDisplay();
   }
 }
-
-function victory() {
-  showNotification(`Victory! You defeated the ${currentEnemy.name}.`);
-  player.qi += currentEnemy.rewardQi;
-  player.spiritStones += currentEnemy.rewardSpiritStones;
-  checkStage();
-  checkAchievements();
-  checkQuests();
-  updateDisplay();
-  document.getElementById("battleMessage").innerText =
-    `You gained ${currentEnemy.rewardQi} Qi and ${currentEnemy.rewardSpiritStones} Spirit Stones.`;
-  currentEnemy = null;
-  updateBattleDisplay();
-}
-
 function updateDisplay() {
   document.getElementById('qi').innerText = Math.floor(player.qi);
   document.getElementById('stage').innerText = cultivationStages[player.currentStageIndex].name;
   document.getElementById('spirit').innerText = player.spirit;
   document.getElementById('bodyStrength').innerText = player.bodyStrength.toFixed(1);
-  document.getElementById('items').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
-  document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
+  document.getElementById('luck').innerText = player.luck.toFixed(1);
+  document.getElementById('enlightenment').innerText = player.enlightenment.toFixed(1);
+  document.getElementById('tribulationResistance').innerText = player.tribulationResistance.toFixed(1);
+  document.getElementById('karma').innerText = player.karma.toFixed(1);
+  document.getElementById('fate').innerText = player.fate.toFixed(1);
+  document.getElementById('divineInsight').innerText = player.divineInsight.toFixed(1);
   document.getElementById('spiritStones').innerText = player.spiritStones;
+  document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
   document.getElementById('lastSaved').innerText = localStorage.getItem("lastSave") || "Never";
   document.getElementById('version').innerText = GAME_VERSION;
 
@@ -474,51 +506,4 @@ function updateDisplay() {
   }
 
   updateBattleDisplay();
-  renderSkillButtons();
-}
-
-setInterval(updateDisplay, 1000);
-setInterval(gainQi, 1000);
-
-function showNotification(message) {
-  const notif = document.getElementById("notification");
-  notif.innerText = message;
-  notif.classList.add("show");
-  setTimeout(() => notif.classList.remove("show"), 3000);
-}
-
-// Tooltip Modal Help System
-function setupTooltips() {
-  addTooltipClick(".card .achievementList li", (element) => {
-    const name = element.textContent.trim().replace("? ", "");
-    const ach = achievementList.find(a => a.name === name);
-    if (ach) showModal(`${ach.name}`, ach.help);
-  });
-
-  addTooltipClick(".card .questLog div strong", (element) => {
-    const title = element.textContent.trim();
-    const quest = quests.find(q => q.title === title);
-    if (quest) showModal(`${quest.title}`, quest.description);
-  });
-
-  addTooltipClick(".card button", (element) => {
-    const text = element.textContent.trim();
-    const skill = Object.values(skillsData).find(s => s.name === text.split("(")[0].trim());
-    if (skill) showModal(`${skill.name}`, skill.desc);
-  });
-}
-
-function addTooltipClick(selector, callback) {
-  document.querySelectorAll(selector).forEach(el => {
-    el.addEventListener("click", () => callback(el));
-  });
-}
-
-function showModal(title, content) {
-  const modal = document.getElementById("helpModal");
-  const titleEl = document.getElementById("modalTitle");
-  const textEl = document.getElementById("modalText");
-  titleEl.textContent = title;
-  textEl.textContent = content;
-  modal.style.display = "block";
 }

@@ -101,6 +101,18 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.rebirth-btn {
+  background-color: purple;
+  border: 1px solid #f0f;
+  color: white;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.rebirth-btn:hover {
+  background-color: darkviolet;
+}
+
 footer {
   text-align: center;
   padding: 15px;
