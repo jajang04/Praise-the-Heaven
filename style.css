@@ -1,202 +1,125 @@
+
 :root {
-  --bg-color: #0a0a0a;
-  --card-bg: #1e1e1e;
-  --text-color: #0f0;
-  --accent-color: #0ff;
-  --border-color: #0f0;
-  --shadow-color: #0f044c;
-  --disabled-opacity: 0.5;
+  --bg: #fdf6e3;
+  --text: #3c2f2f;
+  --accent: #5e2d2d;
+  --border: #d8b177;
+  --highlight: #9e6f21;
+  --panel: #fff9e5;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --font: 'ZCOOL KuaiLe', cursive;
 }
 
 * {
   box-sizing: border-box;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font);
+  transition: all 0.2s ease-in-out;
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background: var(--bg);
+  color: var(--text);
   margin: 0;
   padding: 0;
-  -webkit-font-smoothing: antialiased;
+}
+
+.wrapper {
+  max-width: 1000px;
+  margin: auto;
+  padding: 20px;
 }
 
 header {
-  background: #111;
-  padding: 20px;
   text-align: center;
-  border-bottom: 2px solid var(--border-color);
+  padding: 20px;
+  border-bottom: 3px double var(--border);
 }
 
 h1 {
   margin: 0;
-  font-size: 2em;
-  color: var(--accent-color);
+  font-size: 2.5em;
+  color: var(--accent);
+}
+
+.subtitle {
+  font-size: 1.2em;
+  color: var(--highlight);
+  margin-top: 5px;
 }
 
 main {
-  max-width: 1200px;
-  margin: auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
-  padding: 20px;
+  margin-top: 20px;
 }
 
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+.panel {
+  background: var(--panel);
+  border: 2px solid var(--border);
   border-radius: 10px;
+  box-shadow: 0 4px 10px var(--shadow);
   padding: 15px;
-  width: 320px;
-  box-shadow: 0 0 10px var(--shadow-color);
-  transition: transform 0.2s ease;
+  width: 280px;
+  min-height: 200px;
 }
 
-.card:hover {
-  transform: scale(1.02);
-}
-
-.card h2 {
+.panel h2 {
   margin-top: 0;
-  font-size: 1.2em;
-  color: var(--accent-color);
+  color: var(--accent);
+  font-size: 1.4em;
 }
 
-.questLog strong {
-  color: #0ff;
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.questLog .completed {
-  color: #0f0;
-  font-weight: bold;
+li {
+  margin-bottom: 6px;
 }
 
 button {
-  background: black;
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 8px 12px;
-  cursor: pointer;
   width: 100%;
+  padding: 10px;
   margin: 5px 0;
-  transition: all 0.3s ease;
-  font-family: inherit;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
 }
 
 button:hover {
-  background: var(--text-color);
-  color: black;
-  box-shadow: 0 0 8px var(--text-color);
-}
-
-button:focus {
-  outline: none;
-  box-shadow: 0 0 5px var(--text-color), 0 0 10px var(--text-color);
-}
-
-button:disabled {
-  opacity: var(--disabled-opacity);
-  cursor: not-allowed;
-}
-
-.rebirth-btn {
-  background-color: purple;
-  border: 1px solid #f0f;
-  color: white;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
-
-.rebirth-btn:hover {
-  background-color: darkviolet;
+  background: var(--highlight);
 }
 
 footer {
   text-align: center;
-  padding: 15px;
+  padding: 20px;
   font-size: 0.9em;
-  color: #666;
-  border-top: 1px solid #222;
+  color: var(--accent);
+  margin-top: 40px;
 }
 
 .notification {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #000;
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
+  background: var(--highlight);
+  color: #fff;
   padding: 10px 20px;
   border-radius: 6px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
   z-index: 1000;
-  box-shadow: 0 0 10px var(--shadow-color);
 }
 
 .notification.show {
   opacity: 1;
-}
-
-#achievementLog li {
-  color: var(--text-color);
-  font-weight: bold;
-  margin: 5px 0;
-  cursor: help;
-}
-
-#achievementLog li::before {
-  content: "? ";
-  color: gold;
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.8);
-  z-index: 9999;
-}
-
-.modal-content {
-  background-color: #1a1a1a;
-  margin: 15% auto;
-  padding: 20px;
-  border: 1px solid #0f0;
-  width: 80%;
-  max-width: 400px;
-  border-radius: 8px;
-  box-shadow: 0 0 15px #0f0;
-  position: relative;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  color: #0ff;
-}
-
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 20px;
-  cursor: pointer;
-  color: #0f0;
-}
-
-@media (max-width: 768px) {
-  main {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .card {
-    width: 100%;
-  }
 }

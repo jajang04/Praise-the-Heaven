@@ -1,509 +1,270 @@
-// Cultivation Stages (Expanded)
-const cultivationStages = [
-  { name: "Mortal", qiNeeded: 0 },
-  { name: "Essence Gathering", qiNeeded: 100 },
-  { name: "Foundation Establishment", qiNeeded: 500 },
-  { name: "Core Formation", qiNeeded: 2000 },
-  { name: "Nascent Soul", qiNeeded: 5000 },
-  { name: "Soul Transformation", qiNeeded: 10000 },
-  { name: "Spirit Severing", qiNeeded: 25000 },
-  { name: "Immortal Ascension", qiNeeded: 50000 },
-  { name: "Divine Core", qiNeeded: 100000 },
-  { name: "Void Sovereign", qiNeeded: 250000 },
-  { name: "Eternal Dao", qiNeeded: 500000 }
+// Praise the Heaven: Idle Cultivation RPG v2.2.0
+// Now with Spiritual Roots, Events, and Quest System
+
+const VERSION = "2.2.0";
+const STAGES = [
+  { name: "Mortal", qi: 0 },
+  { name: "Essence Gathering", qi: 100 },
+  { name: "Foundation Establishment", qi: 500 },
+  { name: "Core Formation", qi: 2000 },
+  { name: "Nascent Soul", qi: 5000 },
+  { name: "Soul Transformation", qi: 10000 },
+  { name: "Immortal Ascension", qi: 50000 },
+  { name: "Void Sovereign", qi: 250000 },
+  { name: "Eternal Dao", qi: 500000 }
 ];
 
-const GAME_VERSION = "1.0.0";
+const ROOTS = {
+  fire: { name: "Fire Root", desc: "+20% Qi gain", modifier: p => p.qiBonus = 1.2 },
+  water: { name: "Water Root", desc: "Safer meditation", modifier: p => { p.meditationBoost = true; } },
+  wood: { name: "Wood Root", desc: "+Spirit over time", modifier: p => p.spiritGrowth = true },
+  earth: { name: "Earth Root", desc: "Resist trib loss", modifier: p => p.tribulationResist = true },
+  metal: { name: "Metal Root", desc: "Better breakthroughs", modifier: p => p.breakthroughBonus = true }
+};
+
+const EVENTS = [
+  () => notify("A passing crane drops a spiritual feather. Gain 1 spirit stone."),
+  () => { player.spirit += 1; notify("You meditate under a Bodhi tree. +1 Spirit"); },
+  () => { player.qi += 250; notify("You found a Qi-rich spring. +250 Qi"); },
+  () => notify("A celestial bell rings in the distance. Your soul trembles..."),
+  () => { player.inventory.push("herb"); notify("A rare herb grows nearby. You collect it."); }
+];
+
+const QUESTS = [
+  { title: "First Qi", desc: "Reach 500 Qi", check: p => p.qi >= 500, reward: () => { player.spiritStones += 1; } },
+  { title: "Potion Crafter", desc: "Brew 1 potion", check: p => p.potions >= 1, reward: () => { player.spirit += 1; } },
+  { title: "Beginner Stage", desc: "Reach Foundation Establishment", check: p => p.currentStage >= 2, reward: () => { player.karma += 1; } },
+  { title: "Herb Collector", desc: "Get 3 herbs", check: p => (p.herbCount || 0) >= 3, reward: () => { player.inventory.push("elixir"); } }
+];
 
 let player = {
   qi: 0,
   spirit: 1,
   bodyStrength: 1,
-  luck: 1,
-  enlightenment: 1,
-  tribulationResistance: 1,
-  karma: 0,
   fate: 1,
+  karma: 0,
   divineInsight: 0,
-  currentStageIndex: 0,
-  inventory: [],
   spiritStones: 0,
-  skills: {
-    basicCultivation: true,
-    innerFocus: false,
-    soulMend: false,
-    qiSurge: false,
-    bodyTempering: false,
-    luckyCharm: false
-  },
-  potionsBrewed: 0,
-  achievements: [],
-  luckyHerbCount: 0,
-  tribulationSurvived: false,
-  lastTribulation: 0,
-  rebirthCount: 0
+  currentStage: 0,
+  inventory: [],
+  skills: {},
+  rebirths: 0,
+  root: null,
+  qiBonus: 1,
+  potions: 0,
+  herbCount: 0,
+  completedQuests: []
 };
 
-let isMeditating = false;
-let meditationTimerId = null;
-let skillCooldowns = {
-  innerFocus: false,
-  qiSurge: false
-};
-let currentEnemy = null;
+function updateDisplay() {
+  const byId = id => document.getElementById(id);
+  byId("qi").innerText = Math.floor(player.qi);
+  byId("spirit").innerText = player.spirit;
+  byId("bodyStrength").innerText = player.bodyStrength.toFixed(1);
+  byId("karma").innerText = player.karma;
+  byId("fate").innerText = player.fate.toFixed(1);
+  byId("divineInsight").innerText = player.divineInsight.toFixed(1);
+  byId("spiritStones").innerText = player.spiritStones;
+  byId("stage").innerText = STAGES[player.currentStage].name;
+  byId("version").innerText = VERSION;
+  byId("lastSaved").innerText = localStorage.getItem("lastSave") || "Never";
 
-const enemyDatabase = [
-  { name: "Wolf Spirit", hp: 50, rewardQi: 100, rewardSpiritStones: 1 },
-  { name: "Corrupted Cultivator", hp: 100, rewardQi: 200, rewardSpiritStones: 2 },
-  { name: "Mountain Beast", hp: 200, rewardQi: 500, rewardSpiritStones: 3 },
-  { name: "Ancient Demon", hp: 500, rewardQi: 1000, rewardSpiritStones: 5 }
-];
-
-const quests = [
-  { title: "First Steps", completed: false, reward: 100, description: "Gain 500 Qi" },
-  { title: "Herbalist", completed: false, reward: 1, description: "Brew a potion" },
-  { title: "Power Spike", completed: false, reward: 2, description: "Reach 1000 Qi in one stage" },
-  { title: "Bodybuilder", completed: false, reward: 3, description: "Increase Body Strength to 5" },
-  { title: "Fortune Seeker", completed: false, reward: 2, description: "Use Lucky Charm or gain Luck" },
-  { title: "Master of Focus", completed: false, reward: 1, description: "Activate Inner Focus once" },
-  { title: "Transcend Death", completed: false, reward: 5, description: "Reincarnate once" }
-];
-
-const skillsData = {
-  basicCultivation: { name: "Basic Cultivation", desc: "Base Qi gain +1/s" },
-  innerFocus: { name: "Inner Focus", desc: "Double Qi gain for 5 minutes", cost: 3 },
-  soulMend: { name: "Soul Mend", desc: "Reduces deviation chance", cost: 5 },
-  qiSurge: { name: "Qi Surge", desc: "Triple Qi gain for 5 minutes", cost: 5 },
-  bodyTempering: { name: "Body Tempering", desc: "Boosts Body Strength over time", cost: 4 },
-  luckyCharm: { name: "Lucky Charm", desc: "Increases rare drop chance", cost: 6 }
-};
-
-const achievementList = [
-  {
-    name: "First 100 Qi",
-    reward: 5,
-    check: () => player.qi >= 100,
-    help: "Gain 100 Qi naturally through cultivation."
-  },
-  {
-    name: "Reached Foundation Stage",
-    reward: 10,
-    check: () => player.currentStageIndex >= 2,
-    help: "Ascend to the Foundation Establishment stage."
-  },
-  {
-    name: "Master Alchemist",
-    reward: 15,
-    check: () => player.potionsBrewed >= 3,
-    help: "Successfully brew 3 potions."
-  },
-  {
-    name: "Power Spike Master",
-    reward: 5,
-    check: () => {
-      const currentMin = cultivationStages[player.currentStageIndex].qiNeeded;
-      const nextMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
-      return player.qi - currentMin >= 1000 && player.qi < nextMin;
-    },
-    help: "Reach 1000 Qi above your current stage minimum."
-  },
-  {
-    name: "Strong Body Disciple",
-    reward: 5,
-    check: () => player.bodyStrength >= 5,
-    help: "Increase your Body Strength to at least 5."
-  },
-  {
-    name: "Qi Surge Master",
-    reward: 5,
-    check: () => skillCooldowns.qiSurge === true,
-    help: "Activate the Qi Surge skill once."
-  },
-  {
-    name: "Body Tempering Beginner",
-    reward: 7,
-    check: () => player.bodyStrength >= 10,
-    help: "Reach Body Strength of 10 by using Body Tempering."
-  },
-  {
-    name: "Lucky Collector",
-    reward: 6,
-    check: () => player.luckyHerbCount >= 3,
-    help: "Collect 3 herbs using the Lucky Charm effect."
-  },
-  {
-    name: "Tribulation Survivor",
-    reward: 8,
-    check: () => player.tribulationSurvived === true,
-    help: "Survive a divine Tribulation."
-  },
-  {
-    name: "Master Alchemist II",
-    reward: 12,
-    check: () => player.potionsBrewed >= 10,
-    help: "Brew 10 potions successfully."
-  },
-  {
-    name: "Cycle Broken",
-    reward: 10,
-    check: () => player.rebirthCount >= 1,
-    help: "Break free from samsara and Reborn!"
+  // Quest Log
+  const questLog = document.getElementById("questLog");
+  if (questLog) {
+    questLog.innerHTML = "";
+    QUESTS.forEach(q => {
+      const done = player.completedQuests.includes(q.title);
+      if (!done && q.check(player)) {
+        q.reward();
+        player.completedQuests.push(q.title);
+        notify(`Quest Complete: ${q.title}`);
+      }
+      questLog.innerHTML += `<div class="${done ? 'done' : ''}"><strong>${q.title}</strong>: ${q.desc}</div>`;
+    });
   }
-];
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadGame();
+function gainQi(base = 1) {
+  let bonus = base * (player.qiBonus || 1);
+  player.qi += bonus;
+  checkStageUp();
   updateDisplay();
-  const lastLoginTime = parseInt(localStorage.getItem("lastLogin")) || Date.now();
-  const timeOfflineSec = (Date.now() - lastLoginTime) / 1000;
-  const baseRate = 1;
-  player.qi += timeOfflineSec * baseRate;
-  checkStage();
-  checkAchievements();
-  tryAutoBreakthrough();
-  checkQuests();
-  updateDisplay();
-  localStorage.setItem("lastLogin", Date.now());
-  setupTooltips();
+}
 
-  setInterval(() => {
-    if (player.skills.bodyTempering) {
-      player.bodyStrength += 0.01;
-    }
-    if (player.fate > 1 && Math.random() < 0.01) {
-      player.spiritStones++;
-      showNotification("Fate brings you an extra Spirit Stone!");
-    }
-  }, 1000);
-
-  setInterval(forceSave, 10000); // autosave every 10 seconds
-});
-
-function gainQi(amount = 1) {
-  if (player.skills.innerFocus && !skillCooldowns.innerFocus) amount *= 2;
-  if (player.skills.qiSurge && !skillCooldowns.qiSurge) amount *= 3;
-  player.qi += amount;
-  checkStage();
-  checkQuests();
-  checkAchievements();
+function checkStageUp() {
+  let next = STAGES[player.currentStage + 1];
+  if (next && player.qi >= next.qi) {
+    player.currentStage++;
+    notify(`You've advanced to ${STAGES[player.currentStage].name}!`);
+  }
 }
 
 function startMeditation() {
-  if (isMeditating || meditationTimerId) return;
-  isMeditating = true;
-  showNotification("Entering meditation...");
-  let duration = 0;
-  meditationTimerId = setInterval(() => {
-    duration++;
+  notify("Meditating... Qi flows within.");
+  let ticks = 0;
+  let duration = player.meditationBoost ? 90 : 60;
+  let interval = setInterval(() => {
     gainQi(2);
-    // Deviation chance
-    if (Math.random() < 0.01) {
-      stopMeditation();
-      player.qi -= 100;
-      showNotification("Meditation deviation! Lost 100 Qi.");
-      updateDisplay();
-      return;
+    ticks++;
+    if (!player.meditationBoost && Math.random() < 0.01) {
+      clearInterval(interval);
+      player.qi = Math.max(0, player.qi - 100);
+      notify("Deviation! Lost 100 Qi.");
     }
-    // Lucky Charm Effect
-    if (player.skills.luckyCharm && Math.random() < 0.05) {
-      player.inventory.push("herb");
-      player.luckyHerbCount++;
-      showNotification("Lucky charm worked! You found an herb while meditating.");
-    }
-    if (duration >= 60) {
-      stopMeditation();
-      showNotification("Meditation complete!");
-    }
+    if (ticks >= duration) clearInterval(interval);
   }, 1000);
-}
-
-function stopMeditation() {
-  clearInterval(meditationTimerId);
-  meditationTimerId = null;
-  isMeditating = false;
-  updateDisplay();
-}
-
-function triggerTribulation(force = false) {
-  const minInterval = 1000 * 60 * 5; // 5 minutes
-  const now = Date.now();
-  if (!force && now - player.lastTribulation < minInterval) {
-    showNotification("You’ve recently faced a tribulation. Rest before tempting fate again.");
-    return;
-  }
-  player.lastTribulation = now;
-  player.tribulationSurvived = true;
-  const intensityLevel = Math.floor(player.currentStageIndex / 2); // 0 to 4
-  const strikes = [1, 2, 3, 4, 5][intensityLevel] || 3;
-  showNotification("A Divine Tribulation Descends!");
-  for (let i = 0; i < strikes; i++) {
-    const dmg = Math.floor(Math.random() * 500 * (intensityLevel + 1));
-    const resistRoll = Math.random() * 10;
-    if (player.tribulationResistance > resistRoll) {
-      showNotification("Resisted heavenly bolt!");
-    } else {
-      player.qi -= dmg;
-      showNotification(`Tribulation struck! Lost ${dmg} Qi.`);
-      player.tribulationSurvived = false;
-    }
-  }
-  checkStage();
-  checkAchievements();
-  updateDisplay();
 }
 
 function brewPotion() {
   if (player.inventory.includes("herb")) {
-    const index = player.inventory.indexOf("herb");
-    player.inventory.splice(index, 1);
-    player.potionsBrewed++;
-    player.spirit += 1;
-    showNotification("Brewed a spiritual potion! Your Spirit increased by 1.");
-    checkQuests();
-    checkAchievements();
+    player.spirit++;
+    player.potions++;
+    player.inventory.splice(player.inventory.indexOf("herb"), 1);
+    notify("Brewed potion! Spirit increased.");
     updateDisplay();
+  } else notify("No herb to brew.");
+}
+
+function triggerTribulation() {
+  const success = Math.random() < player.fate / 10;
+  if (success) {
+    notify("You endured the tribulation and ascended!");
+    player.qi += 5000;
   } else {
-    showNotification("You need an herb to brew!");
+    let loss = player.tribulationResist ? 1500 : 3000;
+    notify("The Heavens strike! You lose Qi.");
+    player.qi = Math.max(0, player.qi - loss);
   }
+  updateDisplay();
 }
 
-function buyItem(item) {
-  if (player.spiritStones >= 1) {
-    player.spiritStones--;
-    player.inventory.push(item);
-    showNotification("You bought an herb!");
-  } else {
-    document.getElementById("shopMessage").innerText = "Not enough Spirit Stones!";
-    setTimeout(() => document.getElementById("shopMessage").innerText = "", 2000);
-  }
-}
+function attemptRebirth() {
+  if (player.currentStage < 6) return notify("You must reach Immortal Ascension.");
+  if (!confirm("Rebirth resets progress but grants you deeper fate. Proceed?")) return;
 
-function unlockSkill(skillName) {
-  const skill = skillsData[skillName];
-  if (!player.skills[skillName] && player.spiritStones >= skill.cost) {
-    player.skills[skillName] = true;
-    player.spiritStones -= skill.cost;
-    showNotification("You unlocked " + skill.name + "!");
-    updateDisplay();
-  } else {
-    showNotification("Not enough Spirit Stones or already learned.");
-  }
-}
-
-function checkStage() {
-  while (
-    player.currentStageIndex < cultivationStages.length - 1 &&
-    player.qi >= cultivationStages[player.currentStageIndex + 1].qiNeeded
-  ) {
-    player.currentStageIndex++;
-    showNotification("You've ascended to " + cultivationStages[player.currentStageIndex].name + "!");
-  }
-}
-
-function tryAutoBreakthrough() {
-  const nextStage = cultivationStages[player.currentStageIndex + 1];
-  if (nextStage && Math.random() < 0.05 && player.qi >= nextStage.qiNeeded) {
-    player.currentStageIndex++;
-    showNotification("A cosmic force stirs... You’ve broken through to " + nextStage.name + "!");
-  }
-}
-
-window.onbeforeunload = () => {
-  localStorage.setItem("playerData", JSON.stringify(player));
-};
-
-function loadGame() {
-  const savedPlayer = localStorage.getItem("playerData");
-  if (savedPlayer) player = JSON.parse(savedPlayer);
+  player.rebirths++;
+  const bonus = player.rebirths * 5;
+  player = {
+    qi: bonus * 10,
+    spirit: 1,
+    bodyStrength: 1,
+    fate: 1 + player.rebirths * 0.2,
+    karma: 0,
+    divineInsight: 0,
+    spiritStones: bonus,
+    currentStage: 0,
+    inventory: [],
+    skills: {},
+    rebirths: player.rebirths,
+    root: player.root,
+    qiBonus: 1,
+    potions: 0,
+    herbCount: 0,
+    completedQuests: []
+  };
+  ROOTS[player.root].modifier(player);
+  notify("You have been reborn. A new cycle begins.");
+  updateDisplay();
 }
 
 function forceSave() {
-  localStorage.setItem("playerData", JSON.stringify(player));
+  localStorage.setItem("praisePlayer", JSON.stringify(player));
   const now = new Date().toLocaleTimeString();
   localStorage.setItem("lastSave", now);
-  showNotification("Game saved manually!");
+  notify("Progress saved.");
 }
 
-function checkAchievements() {
-  achievementList.forEach(ach => {
-    if (!player.achievements.includes(ach.name) && ach.check()) {
-      player.achievements.push(ach.name);
-      player.spiritStones += ach.reward;
-      showNotification("Achievement Unlocked: " + ach.name + "! You earned " + ach.reward + " Spirit Stones.");
-    }
-  });
-}
-
-function checkQuests() {
-  quests.forEach(quest => {
-    if (!quest.completed) {
-      switch (quest.title) {
-        case "First Steps":
-          if (player.qi >= 500) quest.completed = true;
-          break;
-        case "Herbalist":
-          if (player.potionsBrewed >= 1) quest.completed = true;
-          break;
-        case "Power Spike":
-          const currentMin = cultivationStages[player.currentStageIndex].qiNeeded;
-          const nextMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
-          if (player.qi - currentMin >= 1000 && player.qi < nextMin) quest.completed = true;
-          break;
-        case "Bodybuilder":
-          if (player.bodyStrength >= 5) quest.completed = true;
-          break;
-        case "Fortune Seeker":
-          if (player.luck > 1 || player.inventory.includes("herb")) quest.completed = true;
-          break;
-        case "Master of Focus":
-          if (skillCooldowns.innerFocus) quest.completed = true;
-          break;
-        case "Transcend Death":
-          if (player.rebirthCount >= 1) quest.completed = true;
-          break;
-      }
-      if (quest.completed) {
-        player.spiritStones += quest.reward;
-        showNotification(`Quest Completed: ${quest.title}!`);
-      }
-    }
-  });
-}
-
-function attemptRebirth() {
-  if (player.currentStageIndex < 7) {
-    showNotification("You must reach Immortal Ascension before attempting Rebirth.");
-    return;
-  }
-
-  if (confirm("Are you sure you wish to reincarnate? This will reset progress but grant permanent benefits.")) {
-    player.rebirthCount++;
-
-    const bonusSpiritStones = Math.floor(player.spiritStones * 0.1) + player.rebirthCount * 5;
-    const bonusQi = Math.floor(player.qi * 0.05) + player.rebirthCount * 100;
-
-    player = {
-      qi: bonusQi,
-      spirit: player.spirit,
-      bodyStrength: 1.5,
-      luck: player.luck,
-      enlightenment: player.enlightenment,
-      tribulationResistance: player.tribulationResistance + 0.1,
-      karma: player.karma - Math.floor(player.rebirthCount / 5),
-      fate: player.fate + 0.1,
-      divineInsight: player.divineInsight + Math.random(),
-      currentStageIndex: 0,
-      inventory: [],
-      spiritStones: bonusSpiritStones,
-      skills: player.skills,
-      potionsBrewed: 0,
-      achievements: player.achievements,
-      luckyHerbCount: 0,
-      tribulationSurvived: false,
-      lastTribulation: 0,
-      rebirthCount: player.rebirthCount
-    };
-
-    showNotification("You have been reborn! Your soul has grown stronger.");
-    checkAchievements();
-    checkQuests();
-    updateDisplay();
-  }
-}
-function attemptRebirth() {
-  if (player.currentStageIndex < 7) {
-    showNotification("You must reach Immortal Ascension before attempting Rebirth.");
-    return;
-  }
-
-  if (confirm("Are you sure you wish to reincarnate? This will reset progress but grant permanent benefits.")) {
-    player.rebirthCount++;
-
-    const bonusSpiritStones = Math.floor(player.spiritStones * 0.1) + player.rebirthCount * 5;
-    const bonusQi = Math.floor(player.qi * 0.05) + player.rebirthCount * 100;
-
-    player = {
-      qi: bonusQi,
-      spirit: player.spirit,
-      bodyStrength: 1.5,
-      luck: player.luck,
-      enlightenment: player.enlightenment,
-      tribulationResistance: player.tribulationResistance + 0.1,
-      karma: player.karma - Math.floor(player.rebirthCount / 5),
-      fate: player.fate + 0.1,
-      divineInsight: player.divineInsight + Math.random(),
-      currentStageIndex: 0,
-      inventory: [],
-      spiritStones: bonusSpiritStones,
-      skills: player.skills,
-      potionsBrewed: 0,
-      achievements: player.achievements,
-      luckyHerbCount: 0,
-      tribulationSurvived: false,
-      lastTribulation: 0,
-      rebirthCount: player.rebirthCount
-    };
-
-    showNotification("You have been reborn! Your soul has grown stronger.");
-    checkAchievements();
-    checkQuests();
-    updateDisplay();
-  }
-}
-function updateDisplay() {
-  document.getElementById('qi').innerText = Math.floor(player.qi);
-  document.getElementById('stage').innerText = cultivationStages[player.currentStageIndex].name;
-  document.getElementById('spirit').innerText = player.spirit;
-  document.getElementById('bodyStrength').innerText = player.bodyStrength.toFixed(1);
-  document.getElementById('luck').innerText = player.luck.toFixed(1);
-  document.getElementById('enlightenment').innerText = player.enlightenment.toFixed(1);
-  document.getElementById('tribulationResistance').innerText = player.tribulationResistance.toFixed(1);
-  document.getElementById('karma').innerText = player.karma.toFixed(1);
-  document.getElementById('fate').innerText = player.fate.toFixed(1);
-  document.getElementById('divineInsight').innerText = player.divineInsight.toFixed(1);
-  document.getElementById('spiritStones').innerText = player.spiritStones;
-  document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
-  document.getElementById('lastSaved').innerText = localStorage.getItem("lastSave") || "Never";
-  document.getElementById('version').innerText = GAME_VERSION;
-
-  // Update Leaderboard
-  const leaderboardList = document.getElementById("leaderboard");
-  const allPlayers = JSON.parse(localStorage.getItem("leaderboard") || "[]");
-  const youIndex = allPlayers.findIndex(p => p.name === "You");
-  if (youIndex !== -1) {
-    allPlayers[youIndex].score = player.qi;
+function loadGame() {
+  const save = localStorage.getItem("praisePlayer");
+  if (save) {
+    player = JSON.parse(save);
+    if (player.root && ROOTS[player.root]) ROOTS[player.root].modifier(player);
   } else {
-    allPlayers.push({ name: "You", score: player.qi });
+    selectRoot();
   }
-  allPlayers.sort((a, b) => b.score - a.score);
-  localStorage.setItem("leaderboard", JSON.stringify(allPlayers));
-  leaderboardList.innerHTML = "";
-  allPlayers.slice(0, 5).forEach(entry => {
-    leaderboardList.innerHTML += `<li>${entry.name} – ${entry.score} Qi</li>`;
-  });
-
-  // Update Quest Log
-  const questLog = document.getElementById("questLog");
-  if (questLog) {
-    questLog.innerHTML = "";
-    quests.forEach(q => {
-      const status = q.completed ? "Completed" : "Locked";
-      questLog.innerHTML += `<div>[${status}] <strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
-    });
-  }
-
-  // Update Achievement Log
-  const achievementLog = document.getElementById("achievementLog");
-  if (achievementLog) {
-    achievementLog.innerHTML = "";
-    if (player.achievements.length === 0) {
-      achievementLog.innerHTML = "<li>No achievements yet.</li>";
-    } else {
-      player.achievements.forEach(ach => {
-        achievementLog.innerHTML += `<li>? ${ach}</li>`;
-      });
-    }
-  }
-
-  updateBattleDisplay();
+  updateDisplay();
 }
+
+function notify(msg) {
+  const box = document.getElementById("notification");
+  box.innerText = msg;
+  box.classList.add("show");
+  setTimeout(() => box.classList.remove("show"), 3000);
+}
+
+function selectRoot() {
+  let choice = prompt(`Choose your Spiritual Root:\n
+1. Fire – +20% Qi gain\n2. Water – Safer meditation\n3. Wood – Gain spirit over time\n4. Earth – Resist tribulation loss\n5. Metal – Easier breakthroughs\n\nEnter: fire / water / wood / earth / metal`).toLowerCase();
+  if (!ROOTS[choice]) return selectRoot();
+  player.root = choice;
+  ROOTS[choice].modifier(player);
+  alert(`You have chosen the ${ROOTS[choice].name}.`);
+}
+
+function randomEvent() {
+  if (Math.random() < 0.15) {
+    const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+    event();
+    updateDisplay();
+  }
+}
+
+window.onload = () => {
+  loadGame();
+  setInterval(() => gainQi(1), 1000);
+  setInterval(() => { if (player.spiritGrowth) player.spirit += 0.01; }, 2000);
+  setInterval(() => randomEvent(), 15000);
+  setInterval(forceSave, 10000);
+};
+// Praise the Heaven: Idle Cultivation RPG v2.3.0
+// Lore System, Events, Quests, Spiritual Roots Included
+
+// ... (all previous game code remains unchanged)
+
+// ?? LORE SYSTEM
+const LORE_ENTRIES = [
+  {
+    id: "roots",
+    title: "Spiritual Roots",
+    text: "In the vastness of the world, five roots bind a cultivator to the elements: Fire, Water, Wood, Earth, and Metal. These roots shape one’s Dao."
+  },
+  {
+    id: "tribulations",
+    title: "Heavenly Tribulations",
+    text: "When a cultivator challenges the heavens to break through, tribulations descend. Few survive, fewer transcend."
+  },
+  {
+    id: "rebirth",
+    title: "The Cycle of Samsara",
+    text: "Rebirth grants wisdom through loss. Those who dare to be reborn must part with power, but gain insight eternal."
+  },
+  {
+    id: "qi",
+    title: "Qi - The Flow of All",
+    text: "Qi flows in all things — mountain, tree, star. Cultivation is but harmonizing oneself with the rhythm of creation."
+  }
+];
+
+function openLoreModal(id) {
+  const entry = LORE_ENTRIES.find(e => e.id === id);
+  if (!entry) return;
+  const modal = document.getElementById("loreModal");
+  modal.querySelector("#loreTitle").innerText = entry.title;
+  modal.querySelector("#loreText").innerText = entry.text;
+  modal.style.display = "block";
+}
+
+// Hook lore buttons (for index.html)
+window.addEventListener("DOMContentLoaded", () => {
+  const loreButtons = document.querySelectorAll(".lore-btn");
+  loreButtons.forEach(btn => {
+    btn.onclick = () => openLoreModal(btn.dataset.id);
+  });
+});
+
+// Close modal via outside click
+window.onclick = e => {
+  const modal = document.getElementById("loreModal");
+  if (e.target === modal) modal.style.display = "none";
+};
