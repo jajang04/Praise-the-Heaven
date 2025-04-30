@@ -69,15 +69,13 @@ main {
   margin: 5px 0;
 }
 
-.skill-status {
-  font-size: 0.8em;
-  color: gold;
+.questLog strong {
+  color: #0ff;
 }
 
-button.active {
-  background: orange;
-  color: black;
-  box-shadow: 0 0 10px orange;
+.questLog .completed {
+  color: #0f0;
+  font-weight: bold;
 }
 
 button {
@@ -124,14 +122,6 @@ footer {
   h1 {
     font-size: 1.5em;
   }
-
-  body {
-    font-size: 16px;
-  }
-
-  .card p, .card li {
-    font-size: 15px;
-  }
 }
 
 .notification {
@@ -176,14 +166,6 @@ footer {
   cursor: help;
 }
 
-.questLog strong {
-  color: #0ff;
-}
-
-.questLog .completed {
-  color: #0f0;
-}
-
 .modal {
   display: none;
   position: fixed;
@@ -219,13 +201,4 @@ footer {
   font-size: 20px;
   cursor: pointer;
   color: #0f0;
-}
-
-@keyframes flash-red {
-  0%, 100% { background-color: rgba(255, 0, 0, 0.2); }
-  50% { background-color: rgba(255, 0, 0, 0.5); }
-}
-
-.flash-red {
-  animation: flash-red 1s ease;
 }

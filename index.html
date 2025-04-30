@@ -40,12 +40,9 @@
     <!-- Skill Panel -->
     <div class="card">
       <h2>Skills</h2>
-      <p id="innerFocusStatus" class="skill-status">Ready</p>
-      <button onclick="useSkill('innerFocus')" id="btn-innerFocus">Inner Focus (3 Spirit Stones)</button>
-      <p id="qiSurgeStatus" class="skill-status">Ready</p>
-      <button onclick="useSkill('qiSurge')" id="btn-qiSurge">Qi Surge (5 Spirit Stones)</button>
-      <p id="luckyCharmStatus" class="skill-status">Active</p>
-      <button onclick="useSkill('luckyCharm')" id="btn-luckyCharm">Lucky Charm (6 Spirit Stones)</button>
+      <button onclick="unlockSkill('innerFocus')">Inner Focus (3 Spirit Stones)</button>
+      <button onclick="unlockSkill('qiSurge')">Qi Surge (5 Spirit Stones)</button>
+      <button onclick="unlockSkill('luckyCharm')">Lucky Charm (6 Spirit Stones)</button>
       <span id="skillMessage"></span>
     </div>
 
@@ -78,13 +75,6 @@
       <ul id="achievementLog">
         <li>No achievements yet.</li>
       </ul>
-    </div>
-
-    <!-- Export / Import Save -->
-    <div class="card">
-      <h2>Save Management</h2>
-      <button onclick="exportProgress()">Export Save</button>
-      <input type="file" accept="application/json" onchange="importProgress(event)">
     </div>
 
     <!-- Help Modal -->
