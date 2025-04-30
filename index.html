@@ -1,86 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Praise the Heaven - Idle Cultivation RPG" />
-  <title>Praise the Heaven</title>
-  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Praise the Heaven - Idle Cultivation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="wrapper">
     <header>
       <h1>Praise the Heaven</h1>
-      <p class="subtitle">An Idle Journey through the Dao</p>
+      <p class="subtitle">Idle Cultivation Journey</p>
     </header>
 
+    <!-- Left Sidebar - Cultivation Core -->
+    <aside class="panel" id="cultivation-core">
+      <h2>Cultivation Progress</h2>
+      <div class="character-portrait">
+        <div id="character-image"></div>
+      </div>
+      
+      <div class="cultivation-meters">
+        <h3>Qi Accumulation</h3>
+        <div class="progress-container">
+          <div id="qi-progress" class="progress-bar"></div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Qi:</span>
+          <span id="qi-value" class="stat-value">0</span>
+        </div>
+        
+        <h3>Stage Progress</h3>
+        <div class="progress-container">
+          <div id="stage-progress" class="progress-bar"></div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Stage:</span>
+          <span id="stage-name" class="stat-value">Mortal</span>
+        </div>
+      </div>
+      
+      <button id="meditate-btn">Meditate</button>
+      <button id="breakthrough-btn" disabled>Attempt Breakthrough</button>
+    </aside>
+
+    <!-- Main Content Area -->
     <main>
-      <section class="panel" id="stats">
-        <h2>Stats</h2>
-        <ul>
-          <li><strong>Stage:</strong> <span id="stage"></span></li>
-          <li><strong>Qi:</strong> <span id="qi"></span></li>
-          <li><strong>Spirit:</strong> <span id="spirit"></span></li>
-          <li><strong>Body:</strong> <span id="bodyStrength"></span></li>
-          <li><strong>Karma:</strong> <span id="karma"></span></li>
-          <li><strong>Fate:</strong> <span id="fate"></span></li>
-          <li><strong>Insight:</strong> <span id="divineInsight"></span></li>
-          <li><strong>Stones:</strong> <span id="spiritStones"></span></li>
-          <li><strong>Last Save:</strong> <span id="lastSaved"></span></li>
-          <li><strong>Ver:</strong> <span id="version"></span></li>
-        </ul>
+      <section class="panel" id="main-actions">
+        <h2>Cultivation Actions</h2>
+        <div class="action-grid">
+          <button id="cultivate-btn">Gather Qi</button>
+          <button id="comprehend-btn">Comprehend Dao</button>
+          <button id="alchemy-btn">Refine Pills</button>
+          <button id="tribulation-btn">Face Tribulation</button>
+          <button id="rebirth-btn">Seek Rebirth</button>
+        </div>
+        
+        <div class="event-log" id="event-log">
+          <h3>Cultivation Log</h3>
+          <div class="log-content"></div>
+        </div>
       </section>
-
-      <section class="panel" id="actions">
-        <h2>Actions</h2>
-        <button onclick="gainQi()">Cultivate</button>
-        <button onclick="startMeditation()">Meditate</button>
-        <button onclick="brewPotion()">Brew Potion</button>
-        <button onclick="triggerTribulation()">Tribulation</button>
-        <button onclick="attemptRebirth()">Rebirth</button>
-        <button onclick="forceSave()">Save</button>
-      </section>
-
-      <section class="panel" id="quests">
-        <h2>Quests</h2>
-        <div id="questLog"></div>
-      </section>
-
-      <section class="panel" id="skills">
-        <h2>Skills</h2>
-        <div id="skillList"></div>
-      </section>
-
-      <section class="panel" id="achievements">
-        <h2>Achievements</h2>
-        <ul id="achievementLog"></ul>
+      
+      <section class="panel" id="sect-management">
+        <h2>Sect Development</h2>
+        <div class="stat-row">
+          <span class="stat-name">Sect Name:</span>
+          <span id="sect-name" class="stat-value">Lonely Cultivator</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Disciples:</span>
+          <span id="disciple-count" class="stat-value">0</span>
+        </div>
+        <div class="action-grid">
+          <button id="recruit-btn">Recruit Disciple</button>
+          <button id="train-btn">Train Disciples</button>
+          <button id="expand-btn">Expand Sect</button>
+        </div>
       </section>
     </main>
 
-    <footer>
-      <p>Created by Jajang • Inspired by Wuxia, Xianxia & Dao</p>
-    </footer>
+    <!-- Right Sidebar - Stats and Systems -->
+    <aside class="panel" id="game-systems">
+      <section id="player-stats">
+        <h2>Cultivator Stats</h2>
+        <div class="stat-row">
+          <span class="stat-name">Spirit:</span>
+          <span id="spirit-value" class="stat-value">1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Body:</span>
+          <span id="body-value" class="stat-value">1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Fate:</span>
+          <span id="fate-value" class="stat-value">1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Karma:</span>
+          <span id="karma-value" class="stat-value">0</span>
+        </div>
+      </section>
+      
+      <section id="resources">
+        <h2>Resources</h2>
+        <div class="stat-row">
+          <span class="stat-name">Spirit Stones:</span>
+          <span id="stones-value" class="stat-value">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Herbs:</span>
+          <span id="herbs-value" class="stat-value">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-name">Pills:</span>
+          <span id="pills-value" class="stat-value">0</span>
+        </div>
+      </section>
+      
+      <section id="lore-section">
+        <h2>Dao Knowledge</h2>
+        <button class="lore-btn" data-id="roots">Spiritual Roots</button>
+        <button class="lore-btn" data-id="qi">Qi Essence</button>
+        <button class="lore-btn" data-id="tribulations">Tribulations</button>
+        <button class="lore-btn" data-id="rebirth">Rebirth</button>
+      </section>
+    </aside>
 
-    <div id="notification" class="notification"></div>
+    <footer class="panel" id="game-footer">
+      <div class="version-info">
+        <span id="version">v2.4.0</span>
+        <span id="last-saved">Last saved: Never</span>
+      </div>
+      <button id="save-btn">Preserve Cultivation</button>
+    </footer>
   </div>
-  <section class="panel" id="lore">
-    <h2>Lore</h2>
-    <button class="lore-btn" data-id="roots">Spiritual Roots</button>
-    <button class="lore-btn" data-id="qi">Qi Essence</button>
-    <button class="lore-btn" data-id="tribulations">Tribulations</button>
-    <button class="lore-btn" data-id="rebirth">Rebirth</button>
-  </section>
-  
+
+  <!-- Notification System -->
+  <div id="notification" class="notification"></div>
+
   <!-- Lore Modal -->
-  <div id="loreModal" class="modal">
+  <div id="lore-modal" class="modal">
     <div class="modal-content">
-      <span class="close-btn" onclick="document.getElementById('loreModal').style.display='none'">&times;</span>
-      <h3 id="loreTitle"></h3>
-      <p id="loreText"></p>
+      <span class="close-btn">&times;</span>
+      <h3 id="lore-title"></h3>
+      <p id="lore-text"></p>
     </div>
   </div>
-  
+
+  <!-- Scripts -->
+  <script src="cultivation.js"></script>
+  <script src="sect.js"></script>
+  <script src="dao.js"></script>
+  <script src="events.js"></script>
   <script src="game.js"></script>
+  
 </body>
 </html>
