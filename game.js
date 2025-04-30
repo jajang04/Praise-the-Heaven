@@ -442,30 +442,13 @@ function addTooltipClick(selector, callback) {
     el.addEventListener("click", () => callback(el));
   });
 }
-
 function showModal(title, content) {
-  let modal = document.getElementById("helpModal");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "helpModal";
-    modal.style = `
-      position: fixed;
-      top: 20%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1a1a1a;
-      border: 1px solid #0f0;
-      padding: 20px;
-      z-index: 9999;
-      max-width: 300px;
-      box-shadow: 0 0 10px #0f0;
-    `;
-    document.body.appendChild(modal);
-  }
+  const modal = document.getElementById("helpModal");
+  const titleEl = document.getElementById("modalTitle");
+  const textEl = document.getElementById("modalText");
 
-  modal.innerHTML = `
-    <h3>${title}</h3>
-    <p>${content}</p>
-    <button onclick="this.parentNode.remove()" style="margin-top:10px">Close</button>
-  `;
+  titleEl.textContent = title;
+  textEl.textContent = content;
+
+  modal.style.display = "block";
 }
