@@ -33,7 +33,8 @@ let player = {
   potionsBrewed: 0,
   achievements: [],
   luckyHerbCount: 0,
-  tribulationSurvived: false
+  tribulationSurvived: false,
+  lastTribulation: 0 // Timestamp of last major tribulation
 };
 
 let isMeditating = false;
@@ -62,6 +63,73 @@ const skillsData = {
   luckyCharm: { name: "Lucky Charm", desc: "Increases rare drop chance", cost: 6 }
 };
 
+const achievementList = [
+  {
+    name: "First 100 Qi",
+    reward: 5,
+    check: () => player.qi >= 100,
+    help: "Gain 100 Qi naturally through cultivation."
+  },
+  {
+    name: "Reached Foundation Stage",
+    reward: 10,
+    check: () => player.currentStageIndex >= 2,
+    help: "Ascend to the Foundation Establishment stage."
+  },
+  {
+    name: "Master Alchemist",
+    reward: 15,
+    check: () => player.potionsBrewed >= 3,
+    help: "Successfully brew 3 potions."
+  },
+  {
+    name: "Power Spike Master",
+    reward: 5,
+    check: () => {
+      const currentMin = cultivationStages[player.currentStageIndex].qiNeeded;
+      const nextMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
+      return player.qi - currentMin >= 1000 && player.qi < nextMin;
+    },
+    help: "Reach 1000 Qi above your current stage minimum."
+  },
+  {
+    name: "Strong Body Disciple",
+    reward: 5,
+    check: () => player.bodyStrength >= 5,
+    help: "Increase your Body Strength to at least 5."
+  },
+  {
+    name: "Qi Surge Master",
+    reward: 5,
+    check: () => skillCooldowns.qiSurge === true,
+    help: "Activate the Qi Surge skill once."
+  },
+  {
+    name: "Body Tempering Beginner",
+    reward: 7,
+    check: () => player.bodyStrength >= 10,
+    help: "Reach Body Strength of 10 by using Body Tempering."
+  },
+  {
+    name: "Lucky Collector",
+    reward: 6,
+    check: () => player.luckyHerbCount >= 3,
+    help: "Collect 3 herbs using the Lucky Charm effect."
+  },
+  {
+    name: "Tribulation Survivor",
+    reward: 8,
+    check: () => player.tribulationSurvived === true,
+    help: "Survive a divine Tribulation."
+  },
+  {
+    name: "Master Alchemist II",
+    reward: 12,
+    check: () => player.potionsBrewed >= 10,
+    help: "Brew 10 potions successfully."
+  }
+];
+
 document.addEventListener("DOMContentLoaded", () => {
   loadGame();
   updateDisplay();
@@ -78,6 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
   updateDisplay();
 
   localStorage.setItem("lastLogin", Date.now());
+
+  // Add help tooltips
+  setupTooltips();
 });
 
 function gainQi(amount = 1) {
@@ -130,22 +201,39 @@ function stopMeditation() {
   isMeditating = false;
 }
 
-function triggerTribulation() {
-  showNotification("A divine tribulation approaches!");
+function triggerTribulation(force = false) {
+  const minInterval = 1000 * 60 * 5; // 5 minutes
+  const now = Date.now();
 
-  player.tribulationSurvived = true; // Assume survival unless interrupted
-  for (let i = 0; i < 3; i++) {
-    const dmg = Math.floor(Math.random() * 500);
-    if (player.tribulationResistance > Math.random() * 10) {
+  if (!force && now - player.lastTribulation < minInterval) {
+    showNotification("You’ve recently faced a tribulation. Rest before tempting fate again.");
+    return;
+  }
+
+  player.lastTribulation = now;
+  player.tribulationSurvived = true;
+
+  const intensityLevel = Math.floor(player.currentStageIndex / 2); // 0 to 4
+  const strikes = [1, 2, 3, 4, 5][intensityLevel] || 3;
+
+  showNotification("A Divine Tribulation Descends!");
+
+  for (let i = 0; i < strikes; i++) {
+    const dmg = Math.floor(Math.random() * 500 * (intensityLevel + 1));
+    const resistRoll = Math.random() * 10;
+
+    if (player.tribulationResistance > resistRoll) {
       showNotification("Resisted heavenly bolt!");
     } else {
       player.qi -= dmg;
-      showNotification(`Tribulation hit! Lost ${dmg} Qi.`);
+      showNotification(`Tribulation struck! Lost ${dmg} Qi.`);
       player.tribulationSurvived = false;
     }
   }
 
   checkStage();
+  checkAchievements();
+  updateDisplay();
 }
 
 function brewPotion() {
@@ -158,6 +246,7 @@ function brewPotion() {
 
     checkQuests();
     checkAchievements();
+    updateDisplay();
   } else {
     showNotification("You need an herb to brew!");
   }
@@ -180,6 +269,7 @@ function unlockSkill(skillName) {
     player.skills[skillName] = true;
     player.spiritStones -= skill.cost;
     showNotification("You unlocked " + skill.name + "!");
+    updateDisplay();
   } else {
     showNotification("Not enough Spirit Stones or already learned.");
   }
@@ -206,7 +296,6 @@ function tryAutoBreakthrough() {
 setInterval(tryAutoBreakthrough, 30000); // Every 30 seconds
 
 window.onbeforeunload = () => {
-  localStorage.setItem("lastLogin", Date.now());
   localStorage.setItem("playerData", JSON.stringify(player));
 };
 
@@ -221,63 +310,6 @@ function forceSave() {
   localStorage.setItem("lastSave", now);
   showNotification("Game saved manually!");
 }
-
-const achievementList = [
-  {
-    name: "First 100 Qi",
-    reward: 5,
-    check: () => player.qi >= 100
-  },
-  {
-    name: "Reached Foundation Stage",
-    reward: 10,
-    check: () => player.currentStageIndex >= 2
-  },
-  {
-    name: "Master Alchemist",
-    reward: 15,
-    check: () => player.potionsBrewed >= 3
-  },
-  {
-    name: "Power Spike Master",
-    reward: 5,
-    check: () => {
-      const currentMin = cultivationStages[player.currentStageIndex].qiNeeded;
-      const nextMin = cultivationStages[player.currentStageIndex + 1]?.qiNeeded || Infinity;
-      return player.qi - currentMin >= 1000 && player.qi < nextMin;
-    }
-  },
-  {
-    name: "Strong Body Disciple",
-    reward: 5,
-    check: () => player.bodyStrength >= 5
-  },
-  {
-    name: "Qi Surge Master",
-    reward: 5,
-    check: () => skillCooldowns.qiSurge === true
-  },
-  {
-    name: "Body Tempering Beginner",
-    reward: 7,
-    check: () => player.bodyStrength >= 10
-  },
-  {
-    name: "Lucky Collector",
-    reward: 6,
-    check: () => player.luckyHerbCount >= 3
-  },
-  {
-    name: "Tribulation Survivor",
-    reward: 8,
-    check: () => player.tribulationSurvived === true
-  },
-  {
-    name: "Master Alchemist II",
-    reward: 12,
-    check: () => player.potionsBrewed >= 10
-  }
-];
 
 function checkAchievements() {
   achievementList.forEach(ach => {
@@ -327,7 +359,7 @@ function updateDisplay() {
   document.getElementById('qi').innerText = Math.floor(player.qi);
   document.getElementById('stage').innerText = cultivationStages[player.currentStageIndex].name;
   document.getElementById('spirit').innerText = player.spirit;
-  document.getElementById('bodyStrength').innerText = player.bodyStrength;
+  document.getElementById('bodyStrength').innerText = player.bodyStrength.toFixed(1);
   document.getElementById('items').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
   document.getElementById('spiritStones').innerText = player.spiritStones;
   document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
@@ -382,4 +414,58 @@ function showNotification(message) {
   notif.innerText = message;
   notif.classList.add("show");
   setTimeout(() => notif.classList.remove("show"), 3000);
+}
+
+// == HELP SYSTEM ==
+function setupTooltips() {
+  addTooltipClick(".card .achievementList li", (element) => {
+    const name = element.textContent.trim().replace("? ", "");
+    const ach = achievementList.find(a => a.name === name);
+    if (ach) showModal(`${ach.name}`, ach.help);
+  });
+
+  addTooltipClick(".card .questLog div strong", (element) => {
+    const title = element.textContent.trim();
+    const quest = quests.find(q => q.title === title);
+    if (quest) showModal(`${quest.title}`, quest.description);
+  });
+
+  addTooltipClick(".card button", (element) => {
+    const text = element.textContent.trim();
+    const skill = Object.values(skillsData).find(s => s.name === text.split("(")[0].trim());
+    if (skill) showModal(`${skill.name}`, skill.desc);
+  });
+}
+
+function addTooltipClick(selector, callback) {
+  document.querySelectorAll(selector).forEach(el => {
+    el.addEventListener("click", () => callback(el));
+  });
+}
+
+function showModal(title, content) {
+  let modal = document.getElementById("helpModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "helpModal";
+    modal.style = `
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      border: 1px solid #0f0;
+      padding: 20px;
+      z-index: 9999;
+      max-width: 300px;
+      box-shadow: 0 0 10px #0f0;
+    `;
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <h3>${title}</h3>
+    <p>${content}</p>
+    <button onclick="this.parentNode.remove()" style="margin-top:10px">Close</button>
+  `;
 }
