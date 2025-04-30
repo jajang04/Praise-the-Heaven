@@ -188,9 +188,56 @@ button:disabled {
   cursor: pointer;
 }
 
+.event-log {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 5px;
+}
+
+.event-notification {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--highlight);
+  background: rgba(0,0,0,0.1);
+}
+
+.event-notification.uncommon {
+  border-left-color: #58a6ff;
+}
+
+.event-notification.rare {
+  border-left-color: #c678dd;
+}
+
+.event-notification.legendary {
+  border-left-color: #e5c07b;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+#character-image {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .wrapper {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-grid {
     grid-template-columns: 1fr;
   }
 }

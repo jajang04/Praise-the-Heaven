@@ -129,6 +129,8 @@ class EventSystem {
 
   triggerRandomEvent() {
     const player = window.gameState.player;
+    if (!player) return;
+
     const possibleEvents = this.events.filter(e => 
       e.condition(player) && 
       (e.rarity !== "legendary" || Math.random() < 0.05)
@@ -147,9 +149,13 @@ class EventSystem {
     });
 
     window.cultivationSystem.updateQiDisplay();
+    window.game.saveGame();
   }
 
   triggerMeditationEvent() {
+    const player = window.gameState.player;
+    if (!player) return;
+
     const meditationEvents = [
       {
         title: "Qi Surge",
@@ -184,7 +190,6 @@ class EventSystem {
       }
     ];
 
-    const player = window.gameState.player;
     const event = meditationEvents[Math.floor(Math.random() * meditationEvents.length)];
     const result = event.effect(player);
 
@@ -196,6 +201,7 @@ class EventSystem {
     });
 
     window.cultivationSystem.updateQiDisplay();
+    window.game.saveGame();
   }
 
   displayEvent(eventData) {
@@ -208,16 +214,18 @@ class EventSystem {
     `;
 
     const log = document.querySelector('#event-log .log-content');
-    log.prepend(eventBox);
-    
-    // Auto-scroll and limit log size
-    log.scrollTop = 0;
-    while (log.children.length > 10) {
-      log.removeChild(log.lastChild);
+    if (log) {
+      log.prepend(eventBox);
+      
+      // Auto-scroll and limit log size
+      log.scrollTop = 0;
+      while (log.children.length > 10) {
+        log.removeChild(log.lastChild);
+      }
     }
 
     // Also show as floating notification
-    window.notificationSystem.show(
+    window.notificationSystem?.show(
       `${eventData.title}: ${eventData.result}`,
       eventData.rarity === "legendary" ? "success" : "info"
     );
@@ -235,12 +243,5 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (window.gameState) {
     window.eventSystem.initializePlayer(window.gameState.player);
-  } else {
-    const checkGameState = setInterval(() => {
-      if (window.gameState) {
-        clearInterval(checkGameState);
-        window.eventSystem.initializePlayer(window.gameState.player);
-      }
-    }, 100);
   }
 });

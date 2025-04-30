@@ -73,15 +73,6 @@ class CultivationSystem {
           requirement: (p) => p.qi >= 500000 && p.daoInsights >= 10,
           description: "Merge with the eternal Dao"
         }
-      },
-      {
-        name: "Eternal Dao",
-        qiRequired: 500000,
-        description: "You become one with the Dao",
-        breakthrough: {
-          requirement: () => false,
-          description: "The journey continues..."
-        }
       }
     ];
 
@@ -113,18 +104,37 @@ class CultivationSystem {
       }
     };
 
-    this.currentStage = 0;
+    this.currentStageIndex = 0;
     this.initializeEvents();
   }
 
   initializeEvents() {
-    document.getElementById('cultivate-btn').addEventListener('click', () => this.gatherQi());
-    document.getElementById('meditate-btn').addEventListener('click', () => this.startMeditation());
-    document.getElementById('breakthrough-btn').addEventListener('click', () => this.attemptBreakthrough());
+    try {
+      document.getElementById('cultivate-btn').addEventListener('click', () => {
+        this.gatherQi();
+        window.game.saveGame();
+      });
+
+      document.getElementById('meditate-btn').addEventListener('click', () => {
+        this.startMeditation();
+        window.game.saveGame();
+      });
+
+      document.getElementById('breakthrough-btn').addEventListener('click', () => {
+        this.attemptBreakthrough();
+        window.game.saveGame();
+      });
+
+      console.log("Cultivation events initialized successfully");
+    } catch (e) {
+      console.error("Error initializing cultivation events:", e);
+    }
   }
 
   gatherQi(baseAmount = 1) {
     const player = window.gameState.player;
+    if (!player) return;
+
     const multiplier = player.qiMultiplier || 1;
     const amount = baseAmount * multiplier;
     
@@ -140,14 +150,23 @@ class CultivationSystem {
   startMeditation() {
     const player = window.gameState.player;
     const btn = document.getElementById('meditate-btn');
+    if (!player || !btn) return;
     
-    if (player.meditating) return;
+    if (player.meditating) {
+      window.notificationSystem.show("You are already meditating", "info");
+      return;
+    }
     
     player.meditating = true;
     btn.textContent = "Meditating...";
     btn.disabled = true;
     
     const interval = setInterval(() => {
+      if (!player.meditating) {
+        clearInterval(interval);
+        return;
+      }
+
       this.gatherQi(2);
       
       // Check for deviation (unless protected)
@@ -155,31 +174,41 @@ class CultivationSystem {
         player.qi = Math.max(0, player.qi - 100);
         window.notificationSystem.show("Qi deviation! Lost 100 Qi.", "danger");
         clearInterval(interval);
-        player.meditating = false;
-        btn.textContent = "Meditate";
-        btn.disabled = false;
+        this.endMeditation();
       }
     }, 1000);
     
     // Auto-stop after duration
     setTimeout(() => {
-      clearInterval(interval);
-      player.meditating = false;
-      btn.textContent = "Meditate";
-      btn.disabled = false;
-      window.notificationSystem.show("Meditation complete", "success");
+      if (player.meditating) {
+        clearInterval(interval);
+        this.endMeditation();
+        window.notificationSystem.show("Meditation complete", "success");
+      }
     }, 30000);
+  }
+
+  endMeditation() {
+    const player = window.gameState.player;
+    const btn = document.getElementById('meditate-btn');
+    if (!player || !btn) return;
+    
+    player.meditating = false;
+    btn.textContent = "Meditate";
+    btn.disabled = false;
   }
 
   attemptBreakthrough() {
     const player = window.gameState.player;
-    const nextStage = this.stages[this.currentStage + 1];
-    
-    if (!nextStage) {
+    if (!player) return;
+
+    const nextStageIndex = player.currentStage + 1;
+    if (nextStageIndex >= this.stages.length) {
       window.notificationSystem.show("You have reached the pinnacle of cultivation", "info");
       return;
     }
     
+    const nextStage = this.stages[nextStageIndex];
     if (!nextStage.breakthrough.requirement(player)) {
       window.notificationSystem.show("You don't meet the requirements for breakthrough", "danger");
       return;
@@ -190,16 +219,20 @@ class CultivationSystem {
     if (player.breakthroughBonus) successChance *= player.breakthroughBonus;
     
     if (Math.random() < successChance) {
-      this.currentStage++;
-      player.currentStage = this.currentStage;
+      player.currentStage = nextStageIndex;
       window.notificationSystem.show(
-        `Breakthrough successful! You reached ${this.stages[this.currentStage].name} realm`,
+        `Breakthrough successful! You reached ${nextStage.name} realm`,
         "success"
       );
       
       // Stage-specific rewards
-      if (this.currentStage >= 3) { // Core Formation
+      if (player.currentStage >= 3) { // Core Formation
         player.skills.coreManifestation = true;
+      }
+
+      // Auto-create sect at Foundation Establishment
+      if (player.currentStage >= 2 && !player.sect) {
+        window.sectSystem.initializeSect(player);
       }
     } else {
       const qiLoss = player.tribulationResist ? 
@@ -218,8 +251,10 @@ class CultivationSystem {
 
   updateQiDisplay() {
     const player = window.gameState.player;
-    const currentStage = this.stages[this.currentStage];
-    const nextStage = this.stages[this.currentStage + 1];
+    if (!player) return;
+
+    const currentStage = this.stages[player.currentStage];
+    const nextStage = this.stages[player.currentStage + 1];
     
     // Update numeric display
     document.getElementById('qi-value').textContent = Math.floor(player.qi);
@@ -245,20 +280,25 @@ class CultivationSystem {
   }
 
   updateStageDisplay() {
-    const stage = this.stages[this.currentStage];
+    const player = window.gameState.player;
+    if (!player) return;
+
+    const stage = this.stages[player.currentStage];
     document.getElementById('stage-name').textContent = stage.name;
     
     // Update character image based on stage
     const charImage = document.getElementById('character-image');
-    charImage.className = `cultivator-stage-${this.currentStage}`;
+    if (charImage) {
+      charImage.className = `cultivator-stage-${player.currentStage}`;
+      charImage.title = stage.description;
+    }
     
     this.updateQiDisplay();
   }
 
   initializePlayer(player) {
-    // Set initial stage
-    this.currentStage = player.currentStage || 0;
-    
+    if (!player) return;
+
     // Apply spiritual root effects
     if (player.root && this.roots[player.root]) {
       this.roots[player.root].effect(player);
@@ -285,15 +325,7 @@ class CultivationSystem {
 document.addEventListener('DOMContentLoaded', () => {
   window.cultivationSystem = new CultivationSystem();
   
-  // Wait for game state to load
   if (window.gameState) {
     window.cultivationSystem.initializePlayer(window.gameState.player);
-  } else {
-    const checkGameState = setInterval(() => {
-      if (window.gameState) {
-        clearInterval(checkGameState);
-        window.cultivationSystem.initializePlayer(window.gameState.player);
-      }
-    }, 100);
   }
 });

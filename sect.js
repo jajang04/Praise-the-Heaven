@@ -74,22 +74,39 @@ class SectSystem {
   }
 
   initializeEvents() {
-    document.getElementById('recruit-btn').addEventListener('click', () => this.recruitDisciple());
-    document.getElementById('train-btn').addEventListener('click', () => this.trainDisciples());
-    document.getElementById('expand-btn').addEventListener('click', () => this.expandSect());
+    try {
+      document.getElementById('recruit-btn').addEventListener('click', () => {
+        this.recruitDisciple();
+        window.game.saveGame();
+      });
+
+      document.getElementById('train-btn').addEventListener('click', () => {
+        this.trainDisciples();
+        window.game.saveGame();
+      });
+
+      document.getElementById('expand-btn').addEventListener('click', () => {
+        this.expandSect();
+        window.game.saveGame();
+      });
+
+      console.log("Sect events initialized successfully");
+    } catch (e) {
+      console.error("Error initializing sect events:", e);
+    }
   }
 
   recruitDisciple() {
     const player = window.gameState.player;
-    const sect = player.sect;
+    if (!player) return;
 
-    if (!sect) {
+    if (!player.sect) {
       this.initializeSect(player);
       return;
     }
 
     // Base cost increases with each disciple
-    const cost = 10 + (sect.disciples * 5);
+    const cost = 10 + (player.sect.disciples * 5);
 
     if (player.spiritStones < cost) {
       window.notificationSystem.show(`Need ${cost} Spirit Stones to recruit`, "danger");
@@ -97,11 +114,11 @@ class SectSystem {
     }
 
     player.spiritStones -= cost;
-    sect.disciples++;
-    sect.reputation += 2;
+    player.sect.disciples++;
+    player.sect.reputation += 2;
 
     window.notificationSystem.show(
-      `New disciple joins your sect! (Total: ${sect.disciples})`, 
+      `New disciple joins your sect! (Total: ${player.sect.disciples})`, 
       "success"
     );
 
@@ -110,22 +127,20 @@ class SectSystem {
 
   trainDisciples() {
     const player = window.gameState.player;
-    const sect = player.sect;
-
-    if (!sect || sect.disciples < 1) {
+    if (!player || !player.sect || player.sect.disciples < 1) {
       window.notificationSystem.show("No disciples to train", "danger");
       return;
     }
 
     // Training consumes time but improves disciples
-    const trainingPower = sect.trainingEfficiency || 1;
-    const qiGain = sect.disciples * 0.5 * trainingPower;
+    const trainingPower = player.sect.trainingEfficiency || 1;
+    const qiGain = player.sect.disciples * 0.5 * trainingPower;
 
     player.qi += qiGain;
-    sect.reputation += sect.disciples * 0.1;
+    player.sect.reputation += player.sect.disciples * 0.1;
 
     window.notificationSystem.show(
-      `Disciples trained! Gained ${qiGain.toFixed(1)} Qi and ${(sect.disciples * 0.1).toFixed(1)} reputation`,
+      `Disciples trained! Gained ${qiGain.toFixed(1)} Qi and ${(player.sect.disciples * 0.1).toFixed(1)} reputation`,
       "success"
     );
 
@@ -134,9 +149,9 @@ class SectSystem {
 
   expandSect() {
     const player = window.gameState.player;
-    const sect = player.sect;
+    if (!player) return;
 
-    if (!sect) {
+    if (!player.sect) {
       this.initializeSect(player);
       return;
     }
@@ -147,16 +162,16 @@ class SectSystem {
     }
 
     player.spiritStones -= 100;
-    sect.reputation += 10;
+    player.sect.reputation += 10;
 
     // Random chance to discover technique
-    if (Math.random() < 0.3 && sect.techniques.length < this.techniques.length) {
+    if (Math.random() < 0.3 && player.sect.techniques.length < this.techniques.length) {
       const availableTechs = this.techniques.filter(t => 
-        !sect.techniques.some(st => st.name === t.name)
+        !player.sect.techniques.some(st => st.name === t.name)
       );
       if (availableTechs.length > 0) {
         const newTech = availableTechs[0];
-        sect.techniques.push(newTech);
+        player.sect.techniques.push(newTech);
         newTech.effect(player);
         window.notificationSystem.show(
           `Discovered new technique: ${newTech.name}!`, 
@@ -166,7 +181,7 @@ class SectSystem {
     }
 
     window.notificationSystem.show(
-      `Sect expanded! Reputation increased to ${sect.reputation}`,
+      `Sect expanded! Reputation increased to ${player.sect.reputation}`,
       "success"
     );
 
@@ -194,26 +209,34 @@ class SectSystem {
 
   updateSectDisplay() {
     const player = window.gameState.player;
-    const sect = player.sect;
+    if (!player || !player.sect) return;
 
-    if (!sect) return;
-
-    document.getElementById('sect-name').textContent = sect.name;
-    document.getElementById('disciple-count').textContent = sect.disciples;
+    document.getElementById('sect-name').textContent = player.sect.name;
+    document.getElementById('disciple-count').textContent = player.sect.disciples;
 
     // Update sect management buttons
-    document.getElementById('recruit-btn').textContent = 
-      `Recruit Disciple (${10 + (sect.disciples * 5)} Stones)`;
-    document.getElementById('train-btn').disabled = sect.disciples < 1;
-    document.getElementById('expand-btn').textContent = 
-      `Expand Sect (100 Stones)`;
+    const recruitBtn = document.getElementById('recruit-btn');
+    const trainBtn = document.getElementById('train-btn');
+    const expandBtn = document.getElementById('expand-btn');
+
+    if (recruitBtn) {
+      recruitBtn.textContent = `Recruit Disciple (${10 + (player.sect.disciples * 5)} Stones)`;
+    }
+    if (trainBtn) {
+      trainBtn.disabled = player.sect.disciples < 1;
+    }
+    if (expandBtn) {
+      expandBtn.textContent = `Expand Sect (100 Stones)`;
+    }
 
     // Update player's spirit stones display
     document.getElementById('stones-value').textContent = player.spiritStones;
   }
 
   initializePlayer(player) {
-    if (player.currentStage >= 2) { // Foundation Establishment or higher
+    if (!player) return;
+
+    if (player.currentStage >= 2 && !player.sect) { // Foundation Establishment or higher
       this.initializeSect(player);
     }
 
@@ -241,12 +264,5 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (window.gameState) {
     window.sectSystem.initializePlayer(window.gameState.player);
-  } else {
-    const checkGameState = setInterval(() => {
-      if (window.gameState) {
-        clearInterval(checkGameState);
-        window.sectSystem.initializePlayer(window.gameState.player);
-      }
-    }, 100);
   }
 });

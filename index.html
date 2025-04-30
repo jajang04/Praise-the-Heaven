@@ -130,10 +130,11 @@
 
     <footer class="panel" id="game-footer">
       <div class="version-info">
-        <span id="version">v2.4.0</span>
+        <span id="version">v2.5.1</span>
         <span id="last-saved">Last saved: Never</span>
       </div>
-      <button id="save-btn">Preserve Cultivation</button>
+      <button id="save-btn" onclick="window.forceSave()">Preserve Cultivation</button>
+      <button id="reset-btn" onclick="window.resetGame()">Reset Game</button>
     </footer>
   </div>
 
@@ -149,12 +150,26 @@
     </div>
   </div>
 
+  <!-- Root Selection Modal (Initially hidden) -->
+  <div id="root-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h2>Choose Your Spiritual Root</h2>
+      <p>Your root determines your innate cultivation affinity</p>
+      <div class="root-options">
+        <button data-root="fire">Fire Root (+20% Qi)</button>
+        <button data-root="water">Water Root (Safer Meditation)</button>
+        <button data-root="wood">Wood Root (Spirit Growth)</button>
+        <button data-root="earth">Earth Root (Tribulation Resist)</button>
+        <button data-root="metal">Metal Root (Better Breakthroughs)</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
+  <script src="game.js"></script>
   <script src="cultivation.js"></script>
   <script src="sect.js"></script>
   <script src="dao.js"></script>
   <script src="events.js"></script>
-  <script src="game.js"></script>
-  
 </body>
 </html>

@@ -54,20 +54,26 @@ class DaoSystem {
   }
 
   initializeEvents() {
-    document.getElementById('comprehend-btn').addEventListener('click', () => this.attemptComprehension());
-    
-    // Lore button events
-    document.querySelectorAll('.lore-btn').forEach(btn => {
-      btn.addEventListener('click', () => this.showLore(btn.dataset.id));
-    });
-    
-    document.querySelector('.close-btn').addEventListener('click', () => {
-      document.getElementById('lore-modal').style.display = 'none';
-    });
+    try {
+      document.getElementById('comprehend-btn').addEventListener('click', () => {
+        this.attemptComprehension();
+        window.game.saveGame();
+      });
+      
+      // Lore button events
+      document.querySelectorAll('.lore-btn').forEach(btn => {
+        btn.addEventListener('click', () => this.showLore(btn.dataset.id));
+      });
+      
+      console.log("Dao events initialized successfully");
+    } catch (e) {
+      console.error("Error initializing Dao events:", e);
+    }
   }
 
   attemptComprehension() {
     const player = window.gameState.player;
+    if (!player) return;
     
     // Basic requirements
     if (player.qi < 500) {
@@ -145,20 +151,29 @@ class DaoSystem {
     if (!insight) return;
     
     const modal = document.getElementById('lore-modal');
-    document.getElementById('lore-title').textContent = insight.title;
-    document.getElementById('lore-text').textContent = insight.text;
-    modal.style.display = 'block';
+    if (!modal) return;
+    
+    const titleElement = document.getElementById('lore-title');
+    const textElement = document.getElementById('lore-text');
+    
+    if (titleElement && textElement) {
+      titleElement.textContent = insight.title;
+      textElement.textContent = insight.text;
+      modal.style.display = 'block';
+    }
   }
 
   updateDaoDisplay() {
     const player = window.gameState.player;
-    const daoCount = player.daoInsights?.length || 0;
+    if (!player) return;
     
-    // Update any UI elements that show Dao progress
-    // (Can be expanded based on your HTML structure)
+    const daoCount = player.daoInsights?.length || 0;
+    // Can be expanded with more visual feedback
   }
 
   initializePlayer(player) {
+    if (!player) return;
+
     // Set up any initial Dao state
     player.daoInsights = player.daoInsights || [];
     
@@ -177,12 +192,5 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (window.gameState) {
     window.daoSystem.initializePlayer(window.gameState.player);
-  } else {
-    const checkGameState = setInterval(() => {
-      if (window.gameState) {
-        clearInterval(checkGameState);
-        window.daoSystem.initializePlayer(window.gameState.player);
-      }
-    }, 100);
   }
 });
