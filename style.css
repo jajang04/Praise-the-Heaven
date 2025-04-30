@@ -101,29 +101,12 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.cooldown {
-  position: relative;
-}
-
-.cooldown::after {
-  content: attr(data-cooldown);
-  position: absolute;
-  top: 5px;
-  right: 10px;
-  font-size: 0.8em;
-  color: red;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 2px 5px;
-  border-radius: 3px;
-}
-
 footer {
   text-align: center;
   padding: 15px;
   font-size: 0.9em;
   color: #666;
   border-top: 1px solid #222;
-  clear: both;
 }
 
 .notification {

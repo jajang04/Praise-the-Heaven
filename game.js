@@ -139,7 +139,6 @@ const achievementList = [
 
 document.addEventListener("DOMContentLoaded", () => {
   loadGame();
-  updateDisplay();
   const lastLoginTime = parseInt(localStorage.getItem("lastLogin")) || Date.now();
   const timeOfflineSec = (Date.now() - lastLoginTime) / 1000;
   const baseRate = 1;
@@ -152,92 +151,14 @@ document.addEventListener("DOMContentLoaded", () => {
   localStorage.setItem("lastLogin", Date.now());
   setupTooltips();
 
-  renderSkillButtons();
-
   setInterval(() => {
     if (player.skills.bodyTempering) {
       player.bodyStrength += 0.01;
     }
   }, 1000);
 
-  setInterval(forceSave, 10000); // autosave
+  setInterval(forceSave, 10000); // autosave every 10 seconds
 });
-
-function renderSkillButtons() {
-  const skillList = document.getElementById("skillList");
-  if (!skillList) return;
-
-  skillList.innerHTML = "";
-
-  Object.keys(skillsData).forEach(skillName => {
-    const skill = skillsData[skillName];
-    if (player.skills[skillName]) {
-      const btn = document.createElement("button");
-      btn.textContent = `${skill.name} (Active)`;
-
-      if (skillCooldowns[skillName]) {
-        btn.disabled = true;
-        btn.classList.add("cooldown");
-        btn.setAttribute("data-cooldown", formatCooldown(getRemainingCooldown(skillName)));
-        startCooldownCounter(btn, skillName);
-      } else {
-        btn.onclick = () => activateSkill(skillName);
-      }
-
-      skillList.appendChild(btn);
-    } else {
-      const btn = document.createElement("button");
-      btn.innerText = `${skill.name} (${skill.cost} Spirit Stones)`;
-      btn.onclick = () => unlockSkill(skillName);
-      skillList.appendChild(btn);
-    }
-  });
-}
-
-function getRemainingCooldown(skillName) {
-  if (!player.skillCooldownEnd) return 0;
-  return Math.max(0, player.skillCooldownEnd[skillName] - Date.now());
-}
-
-function formatCooldown(ms) {
-  return `~${Math.ceil(ms / 1000)}s left`;
-}
-
-function startCooldownCounter(button, skillName) {
-  const interval = setInterval(() => {
-    const remaining = getRemainingCooldown(skillName);
-    if (remaining <= 0) {
-      clearInterval(interval);
-      button.classList.remove("cooldown");
-      button.removeAttribute("data-cooldown");
-      button.disabled = false;
-      button.innerText = skillsData[skillName].name + " (Active)";
-      button.onclick = () => activateSkill(skillName);
-    } else {
-      button.setAttribute("data-cooldown", formatCooldown(remaining));
-    }
-  }, 1000);
-}
-
-function activateSkill(skillName) {
-  const skill = skillsData[skillName];
-  if (!player.skills[skillName]) return showNotification("Skill not unlocked.");
-  if (skillCooldowns[skillName]) return showNotification(`${skill.name} is on cooldown.`);
-
-  skillCooldowns[skillName] = true;
-  player.skillCooldownEnd = player.skillCooldownEnd || {};
-  player.skillCooldownEnd[skillName] = Date.now() + 300000; // 5 minutes
-
-  showNotification(`${skill.name} activated!`);
-
-  if (skillName === 'innerFocus') {
-    setTimeout(() => { skillCooldowns.innerFocus = false; }, 300000);
-  } else if (skillName === 'qiSurge') {
-    setTimeout(() => { skillCooldowns.qiSurge = false; }, 300000);
-  }
-
-  renderSkillButtons();
-}
 
 function gainQi(amount = 1) {
   if (player.skills.innerFocus && !skillCooldowns.innerFocus) amount *= 2;
@@ -351,6 +272,26 @@ function unlockSkill(skillName) {
   }
 }
 
+function renderSkillButtons() {
+  const skillList = document.getElementById("skillList");
+  if (!skillList) return;
+  skillList.innerHTML = "";
+  Object.keys(skillsData).forEach(skillName => {
+    const skill = skillsData[skillName];
+    if (player.skills[skillName]) {
+      const btn = document.createElement("button");
+      btn.textContent = `${skill.name} (Active)`;
+      btn.disabled = true;
+      skillList.appendChild(btn);
+    } else {
+      const btn = document.createElement("button");
+      btn.innerText = `${skill.name} (${skill.cost} Spirit Stones)`;
+      btn.onclick = () => unlockSkill(skillName);
+      skillList.appendChild(btn);
+    }
+  });
+}
+
 function checkStage() {
   while (
     player.currentStageIndex < cultivationStages.length - 1 &&
@@ -369,8 +310,6 @@ function tryAutoBreakthrough() {
   }
 }
 
-setInterval(tryAutoBreakthrough, 30000); // Every 30 seconds
-
 window.onbeforeunload = () => {
   localStorage.setItem("playerData", JSON.stringify(player));
 };
@@ -378,13 +317,12 @@ window.onbeforeunload = () => {
 function loadGame() {
   const savedPlayer = localStorage.getItem("playerData");
   if (savedPlayer) player = JSON.parse(savedPlayer);
-  player.skillCooldownEnd = player.skillCooldownEnd || {};
 }
 
 function forceSave() {
+  localStorage.setItem("playerData", JSON.stringify(player));
   const now = new Date().toLocaleTimeString();
   localStorage.setItem("lastSave", now);
-  localStorage.setItem("playerData", JSON.stringify(player));
   showNotification("Game saved manually!");
 }
 
@@ -485,20 +423,14 @@ function victory() {
   updateBattleDisplay();
 }
 
-function fleeFromBattle() {
-  showNotification(`You fled from the ${currentEnemy.name}.`);
-  currentEnemy = null;
-  updateBattleDisplay();
-}
-
 function updateDisplay() {
   document.getElementById('qi').innerText = Math.floor(player.qi);
   document.getElementById('stage').innerText = cultivationStages[player.currentStageIndex].name;
   document.getElementById('spirit').innerText = player.spirit;
   document.getElementById('bodyStrength').innerText = player.bodyStrength.toFixed(1);
-  document.getElementById('tribulationResistance').innerText = player.tribulationResistance;
-  document.getElementById('spiritStones').innerText = player.spiritStones;
+  document.getElementById('items').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
   document.getElementById('inventory').innerText = player.inventory.length ? player.inventory.join(', ') : 'None';
+  document.getElementById('spiritStones').innerText = player.spiritStones;
   document.getElementById('lastSaved').innerText = localStorage.getItem("lastSave") || "Never";
   document.getElementById('version').innerText = GAME_VERSION;
 
@@ -523,9 +455,8 @@ function updateDisplay() {
   if (questLog) {
     questLog.innerHTML = "";
     quests.forEach(q => {
-      const statusClass = q.completed ? "completed" : "locked";
-      const statusText = q.completed ? "Completed" : "Locked";
-      questLog.innerHTML += `<div class="${statusClass}"><strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
+      const status = q.completed ? "Completed" : "Locked";
+      questLog.innerHTML += `<div>[${status}] <strong>${q.title}</strong>: ${q.description}<br/>Reward: ${q.reward}</div>`;
     });
   }
 
@@ -543,6 +474,7 @@ function updateDisplay() {
   }
 
   updateBattleDisplay();
+  renderSkillButtons();
 }
 
 setInterval(updateDisplay, 1000);
