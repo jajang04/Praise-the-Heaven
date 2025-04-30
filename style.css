@@ -1,5 +1,3 @@
-/* style.css - Modern dark theme with glowing text */
-
 :root {
   --bg-color: #0a0a0a;
   --card-bg: #1a1a1a;
@@ -71,6 +69,17 @@ main {
   margin: 5px 0;
 }
 
+.skill-status {
+  font-size: 0.8em;
+  color: gold;
+}
+
+button.active {
+  background: orange;
+  color: black;
+  box-shadow: 0 0 10px orange;
+}
+
 button {
   background: black;
   border: 1px solid var(--border-color);
@@ -107,7 +116,6 @@ footer {
   border-top: 1px solid #222;
 }
 
-/* Responsive Layout */
 @media (max-width: 768px) {
   .card {
     width: 100%;
@@ -116,9 +124,16 @@ footer {
   h1 {
     font-size: 1.5em;
   }
+
+  body {
+    font-size: 16px;
+  }
+
+  .card p, .card li {
+    font-size: 15px;
+  }
 }
 
-/* Notification Box */
 .notification {
   position: fixed;
   bottom: 20px;
@@ -130,7 +145,7 @@ footer {
   border-radius: 6px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease, box-shadow 0.3s ease;
+  transition: opacity 0.3s ease;
   z-index: 1000;
   box-shadow: 0 0 10px var(--shadow-color);
 }
@@ -139,7 +154,6 @@ footer {
   opacity: 1;
 }
 
-/* Achievement List Styling */
 #achievementLog {
   list-style: none;
   padding-left: 0;
@@ -157,7 +171,6 @@ footer {
   color: gold;
 }
 
-/* Quest Log Styling */
 #questLog div {
   margin: 5px 0;
   cursor: help;
@@ -170,7 +183,7 @@ footer {
 .questLog .completed {
   color: #0f0;
 }
-/* === Help Modal === */
+
 .modal {
   display: none;
   position: fixed;
@@ -206,4 +219,13 @@ footer {
   font-size: 20px;
   cursor: pointer;
   color: #0f0;
+}
+
+@keyframes flash-red {
+  0%, 100% { background-color: rgba(255, 0, 0, 0.2); }
+  50% { background-color: rgba(255, 0, 0, 0.5); }
+}
+
+.flash-red {
+  animation: flash-red 1s ease;
 }

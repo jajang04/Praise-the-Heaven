@@ -22,9 +22,9 @@
       <p><strong>Qi:</strong> <span id="qi">0</span></p>
       <p><strong>Spirit:</strong> <span id="spirit">1</span></p>
       <p><strong>Body Strength:</strong> <span id="bodyStrength">1</span></p>
+      <p><strong>Tribulation Resistance:</strong> <span id="tribulationResistance">1</span></p>
       <p><strong>Last Saved:</strong> <span id="lastSaved">Never</span></p>
       <p><strong>Version:</strong> <span id="version">1.0.0</span></p>
-      <p><strong>Items:</strong> <span id="items">None</span></p>
     </div>
 
     <!-- Actions -->
@@ -37,6 +37,18 @@
       <button onclick="forceSave()">Save Progress</button>
     </div>
 
+    <!-- Skill Panel -->
+    <div class="card">
+      <h2>Skills</h2>
+      <p id="innerFocusStatus" class="skill-status">Ready</p>
+      <button onclick="useSkill('innerFocus')" id="btn-innerFocus">Inner Focus (3 Spirit Stones)</button>
+      <p id="qiSurgeStatus" class="skill-status">Ready</p>
+      <button onclick="useSkill('qiSurge')" id="btn-qiSurge">Qi Surge (5 Spirit Stones)</button>
+      <p id="luckyCharmStatus" class="skill-status">Active</p>
+      <button onclick="useSkill('luckyCharm')" id="btn-luckyCharm">Lucky Charm (6 Spirit Stones)</button>
+      <span id="skillMessage"></span>
+    </div>
+
     <!-- Shop -->
     <div class="card">
       <h2>Spirit Market</h2>
@@ -44,17 +56,6 @@
       <p><strong>Spirit Stones:</strong> <span id="spiritStones">0</span></p>
       <p><strong>Inventory:</strong> <span id="inventory">None</span></p>
       <span id="shopMessage"></span>
-    </div>
-
-    <!-- Learn Skills -->
-    <div class="card">
-      <h2>Learn Skills</h2>
-      <button onclick="unlockSkill('innerFocus')">Inner Focus (3 Spirit Stones)</button>
-      <button onclick="unlockSkill('soulMend')">Soul Mend (5 Spirit Stones)</button>
-      <button onclick="unlockSkill('qiSurge')">Qi Surge (5 Spirit Stones)</button>
-      <button onclick="unlockSkill('bodyTempering')">Body Tempering (4 Spirit Stones)</button>
-      <button onclick="unlockSkill('luckyCharm')">Lucky Charm (6 Spirit Stones)</button>
-      <span id="skillMessage"></span>
     </div>
 
     <!-- Leaderboard -->
@@ -70,22 +71,29 @@
       <h2>Quests</h2>
       <div id="questLog"></div>
     </div>
-    
-    <!-- Help Modal -->
-<div id="helpModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
-    <h3 id="modalTitle"></h3>
-    <p id="modalText"></p>
-  </div>
-</div>
 
-    <!-- Achievement Log -->
+    <!-- Achievement List -->
     <div class="card achievementList">
       <h2>Achievements</h2>
       <ul id="achievementLog">
         <li>No achievements yet.</li>
       </ul>
+    </div>
+
+    <!-- Export / Import Save -->
+    <div class="card">
+      <h2>Save Management</h2>
+      <button onclick="exportProgress()">Export Save</button>
+      <input type="file" accept="application/json" onchange="importProgress(event)">
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
+        <h3 id="modalTitle"></h3>
+        <p id="modalText"></p>
+      </div>
     </div>
   </main>
 
