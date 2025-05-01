@@ -242,15 +242,86 @@ button:disabled {
   background-size: cover;
   background-position: center;
 }
-
 /* Cultivation Stage Visuals */
-.cultivator-stage-0 { background-image: url('https://placehold.co/100x100/333/e8d8b0?text=Mortal'); }
-.cultivator-stage-1 { 
-  background-image: url('https://placehold.co/100x100/444/aaccff?text=Qi+Ref');
-  border-color: #60a5fa; 
-  box-shadow: 0 0 12px #60a5fa;
+.cultivator-stage-0 { /* Mortal */
+  background-image: url('https://placehold.co/100x100/333/e8d8b0?text=Mortal');
+  border-color: #8B4513; /* Earth brown */
+  box-shadow: 0 0 8px #8B4513;
+  filter: grayscale(30%);
 }
-/* ... other stages ... */
+
+.cultivator-stage-1 { /* Qi Refining */
+  background-image: url('https://placehold.co/100x100/4a6fa5/ffffff?text=Qi+Ref');
+  border-color: #4a6fa5; /* Deep blue */
+  box-shadow: 0 0 12px #4a6fa5;
+  background-blend-mode: luminosity;
+}
+
+.cultivator-stage-2 { /* Foundation Establishment */
+  background-image: url('https://placehold.co/100x100/2e7d32/ffffff?text=Found+Est');
+  border-color: #2e7d32; /* Emerald green */
+  box-shadow: 0 0 15px #2e7d32;
+  background-blend-mode: overlay;
+}
+
+.cultivator-stage-3 { /* Core Formation */
+  background-image: url('https://placehold.co/100x100/d4af37/000000?text=Core+Form');
+  border-color: #d4af37; /* Metallic gold */
+  box-shadow: 0 0 18px #d4af37;
+  background-blend-mode: hard-light;
+}
+
+.cultivator-stage-4 { /* Nascent Soul */
+  background-image: url('https://placehold.co/100x100/9b59b6/ffffff?text=Nascent');
+  border-color: #9b59b6; /* Amethyst purple */
+  box-shadow: 0 0 20px #9b59b6;
+  background-blend-mode: color-dodge;
+}
+
+.cultivator-stage-5 { /* Soul Transformation */
+  background-image: url('https://placehold.co/100x100/e74c3c/ffffff?text=Soul+Trans');
+  border-color: #e74c3c; /* Ruby red */
+  box-shadow: 0 0 22px #e74c3c;
+  background-blend-mode: screen;
+}
+
+.cultivator-stage-6 { /* Immortal Ascension */
+  background-image: url('https://placehold.co/100x100/ffffff/000000?text=Immortal');
+  border-color: #ffffff; /* Pure white */
+  box-shadow: 0 0 25px #ffffff, 
+              0 0 15px #ffffff inset;
+  background-blend-mode: luminosity;
+}
+
+.cultivator-stage-7 { /* Void Sovereign */
+  background-image: url('https://placehold.co/100x100/000000/ffffff?text=Void+Sov');
+  border-color: #000000; /* Void black */
+  box-shadow: 0 0 30px #9b59b6, 
+              0 0 15px #4a6fa5 inset;
+  background-blend-mode: exclusion;
+}
+
+.cultivator-stage-8 { /* Dao Unity (Final Stage) */
+  background-image: url('https://placehold.co/100x100/000000/ffffff?text=Dao+Unity');
+  border-color: #f8f8f8;
+  box-shadow: 0 0 35px #f8f8f8,
+              0 0 25px #9b59b6,
+              0 0 15px #4a6fa5;
+  animation: daoPulse 3s infinite alternate;
+}
+
+@keyframes daoPulse {
+  0% {
+    box-shadow: 0 0 35px #f8f8f8,
+                0 0 25px #9b59b6,
+                0 0 15px #4a6fa5;
+  }
+  100% {
+    box-shadow: 0 0 45px #f8f8f8,
+                0 0 35px #9b59b6,
+                0 0 25px #4a6fa5;
+  }
+}
 
 /* Action Grids */
 .action-grid {

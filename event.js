@@ -196,7 +196,28 @@ class EventSystem {
           return `Gained ${gain} Qi from energy surge`;
         }
       },
-      // ... (other meditation events)
+      {
+        title: "Inner Demon",
+        description: "Dark thoughts arise during your meditation.",
+        effect: (p) => {
+          if (p.meditationBonus) {
+            p.spirit += 0.5;
+            return "Overcame inner demon! Spirit +0.5";
+          } else {
+            const loss = 200;
+            p.qi = Math.max(0, p.qi - loss);
+            return `Lost ${loss} Qi to inner demon`;
+          }
+        }
+      },
+      {
+        title: "Enlightenment",
+        description: "A moment of perfect clarity.",
+        effect: (p) => {
+          p.spirit += 0.3;
+          return "Gained 0.3 Spirit from enlightenment";
+        }
+      }
     ];
 
     const event = meditationEvents[Math.floor(Math.random() * meditationEvents.length)];
