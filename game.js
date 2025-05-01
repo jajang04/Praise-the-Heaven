@@ -94,7 +94,7 @@ class GameSystem {
         herbs: 0,
         pills: 0,
         lastSave: null,
-        meditating: false,
+        meditating: true,
         qiIdleGain: 0.1,
         combatPower: 1,
         tribulationResist: 0,
