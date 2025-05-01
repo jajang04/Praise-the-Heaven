@@ -17,6 +17,37 @@ class DaoSystem {
           effect: (p) => { p.qiIdleGain = (p.qiIdleGain || 0.1) * 1.1; },
           requirements: (p) => p.spirit >= 5
         },
+        {
+          id: "unity",
+          title: "Unity of Heaven and Man",
+          text: "Heaven is eternal, Earth is lasting. The sage aligns with both.",
+          effect: (p) => { p.fate += 0.5; },
+          requirements: (p) => p.currentStage >= 3
+        },
+        {
+          id: "cycle",
+          title: "Cycle of Rebirth",
+          text: "All things return to their root. Cultivation is the journey home.",
+          effect: (p) => { p.rebirthBonus = 1.2; },
+          requirements: (p) => p.rebirths >= 1
+        },
+        {
+          id: "emptiness",
+          title: "The Virtue of Emptiness",
+          text: "The Dao is empty, yet infinitely useful. The sage embraces the void.",
+          effect: (p) => { p.tribulationResist = (p.tribulationResist || 0) + 0.2; },
+          requirements: (p) => p.qi >= 10000
+        },
+        {
+          id: "balance",
+          title: "Yin-Yang Balance",
+          text: "All things carry Yin and embrace Yang. The sage harmonizes these forces.",
+          effect: (p) => { 
+            p.qiMultiplier = (p.qiMultiplier || 1) * 1.15;
+            p.meditationBonus = true;
+          },
+          requirements: (p) => p.root && ['water', 'fire'].includes(p.root)
+        }
         // ... other insights ...
       ];
     }
@@ -24,8 +55,11 @@ class DaoSystem {
     initializeKoans() {
       return [
         "What is the sound of one hand clapping?",
+        "If you meet the Buddha on the road, kill him.","What was your original face before your parents were born?",
         "If you meet the Buddha on the road, kill him.",
-        // ... other koans ...
+        "The sound of one hand clapping.",
+        "Not the wind, not the flag - mind is moving.",
+        "All things return to the One. What does the One return to?"
       ];
     }
   

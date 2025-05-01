@@ -14,6 +14,33 @@ class SectSystem {
         cost: 50,
         effect: (p) => { p.combatPower = (p.combatPower || 1) * 1.5; }
       },
+      {
+        name: "Phoenix Rebirth Method",
+        description: "Allows recovery from near-fatal injuries",
+        cost: 100,
+        effect: (p) => { p.survivalChance = 0.9; }
+      },
+      {
+        name: "Dragon Subduing Palm",
+        description: "Devastating palm technique that can crush boulders",
+        cost: 75,
+        effect: (p) => { p.qiGainBonus = (p.qiGainBonus || 1) * 1.2; }
+      },
+      {
+        name: "Turtle Shell Defense",
+        description: "Impenetrable defensive technique",
+        cost: 60,
+        effect: (p) => { p.defense = (p.defense || 1) * 2; }
+      },
+      {
+        name: "Five Elements Cycle",
+        description: "Balanced technique harnessing all elements",
+        cost: 150,
+        effect: (p) => { 
+          p.qiMultiplier = (p.qiMultiplier || 1) * 1.1;
+          p.spiritGrowth = (p.spiritGrowth || 0) + 0.005;
+        }
+      }
       // ... other techniques ...
     ];
   }
@@ -26,6 +53,30 @@ class SectSystem {
         cost: 100,
         effect: (s) => { s.trainingEfficiency = 1.2; }
       },
+      {
+        name: "Herbal Garden",
+        description: "Grow your own medicinal herbs",
+        cost: 200,
+        effect: (s) => { s.herbProduction = 0.1; }
+      },
+      {
+        name: "Qi Gathering Formation",
+        description: "Enhances Qi concentration in your sect",
+        cost: 300,
+        effect: (s) => { s.qiBonus = 1.1; }
+      },
+      {
+        name: "Library Pavilion",
+        description: "Store and study cultivation manuals",
+        cost: 400,
+        effect: (s) => { s.researchSpeed = 1.3; }
+      },
+      {
+        name: "Grand Hall",
+        description: "Impressive structure that attracts talent",
+        cost: 500,
+        effect: (s) => { s.reputationGrowth = 1.5; }
+      }
       // ... other upgrades ...
     ];
   }

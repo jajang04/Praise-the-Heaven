@@ -11,7 +11,69 @@ class CultivationSystem {
             description: "Sense the flow of Qi" 
           } 
         },
-        // ... (other stages remain the same)
+        {
+          name: "Qi Refining",
+          qiRequired: 100,
+          description: "Begin refining your body and absorbing Qi",
+          breakthrough: {
+            requirement: (p) => p.qi >= 500 && p.spirit >= 3,
+            description: "Establish your foundation in cultivation"
+          }
+        },
+        {
+          name: "Foundation Establishment",
+          qiRequired: 500,
+          description: "Solidify your cultivation base",
+          breakthrough: {
+            requirement: (p) => p.qi >= 2000 && p.body >= 5,
+            description: "Form your golden core"
+          }
+        },
+        {
+          name: "Core Formation",
+          qiRequired: 2000,
+          description: "Your golden core takes shape",
+          breakthrough: {
+            requirement: (p) => p.qi >= 5000 && p.spirit >= 10,
+            description: "Nurture your nascent soul"
+          }
+        },
+        {
+          name: "Nascent Soul",
+          qiRequired: 5000,
+          description: "Your soul begins its immortal journey",
+          breakthrough: {
+            requirement: (p) => p.qi >= 10000 && p.fate >= 3,
+            description: "Face the heavenly tribulation"
+          }
+        },
+        {
+          name: "Soul Transformation",
+          qiRequired: 10000,
+          description: "Your soul undergoes metamorphosis",
+          breakthrough: {
+            requirement: (p) => p.qi >= 50000 && p.karma >= 5,
+            description: "Ascend to immortality"
+          }
+        },
+        {
+          name: "Immortal Ascension",
+          qiRequired: 50000,
+          description: "You become an immortal being",
+          breakthrough: {
+            requirement: (p) => p.qi >= 250000 && p.rebirths >= 1,
+            description: "Comprehend the void"
+          }
+        },
+        {
+          name: "Void Sovereign",
+          qiRequired: 250000,
+          description: "Master of cosmic emptiness",
+          breakthrough: {
+            requirement: (p) => p.qi >= 500000 && p.daoInsights >= 10,
+            description: "Merge with the eternal Dao"
+          }
+        }
       ];
   
       this.roots = {
@@ -20,6 +82,26 @@ class CultivationSystem {
           description: "Enhanced Qi absorption (+20% Qi Multiplier)", 
           effect: (p) => { p.qiMultiplier = (p.qiMultiplier || 1) * 1.2; } 
         },
+        water: {
+          name: "Water Spiritual Root",
+          description: "Calm mind prevents cultivation deviation",
+          effect: (p) => { p.meditationBonus = true; }
+        },
+        wood: {
+          name: "Wood Spiritual Root",
+          description: "Natural connection enhances spirit growth",
+          effect: (p) => { p.spiritGrowth = 0.01; }
+        },
+        earth: {
+          name: "Earth Spiritual Root",
+          description: "Steady progress resists tribulation damage",
+          effect: (p) => { p.tribulationResist = 0.5; }
+        },
+        metal: {
+          name: "Metal Spiritual Root",
+          description: "Strong foundations improve breakthroughs",
+          effect: (p) => { p.breakthroughBonus = 1.2; }
+        }  
         // ... (other roots remain the same)
       };
   
