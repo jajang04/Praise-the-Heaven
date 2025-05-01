@@ -4,7 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Praise the Heaven - Idle Cultivation</title>
+  <meta name="description" content="An idle cultivation game where you progress through stages of spiritual enlightenment">
+  
+  <!-- Preload fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,74 +24,78 @@
       <p class="subtitle">Idle Cultivation Journey</p>
     </header>
 
-    <!-- Left Sidebar - Cultivation Core -->
     <aside class="panel" id="cultivation-core">
       <h2>Cultivation Progress</h2>
       <div class="character-portrait">
-        <div id="character-image"></div>
+        <div id="character-image" title="Your current cultivation appearance"></div>
       </div>
-      
+
       <div class="cultivation-meters">
         <h3>Qi Accumulation</h3>
         <div class="progress-container">
-          <div id="qi-progress" class="progress-bar"></div>
+          <div id="qi-progress" class="progress-bar" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
         <div class="stat-row">
           <span class="stat-name">Qi:</span>
           <span id="qi-value" class="stat-value">0</span>
         </div>
-        
+
         <h3>Stage Progress</h3>
         <div class="progress-container">
-          <div id="stage-progress" class="progress-bar"></div>
+          <div id="stage-progress" class="progress-bar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
         <div class="stat-row">
           <span class="stat-name">Stage:</span>
           <span id="stage-name" class="stat-value">Mortal</span>
         </div>
       </div>
-      
-      <button id="meditate-btn">Meditate</button>
-      <button id="breakthrough-btn" disabled>Attempt Breakthrough</button>
+
+      <button id="meditate-btn" aria-label="Toggle meditation">Meditate</button>
+      <button id="breakthrough-btn" disabled aria-label="Attempt breakthrough to next stage">Attempt Breakthrough</button>
     </aside>
 
-    <!-- Main Content Area -->
     <main>
       <section class="panel" id="main-actions">
         <h2>Cultivation Actions</h2>
         <div class="action-grid">
-          <button id="cultivate-btn">Gather Qi</button>
-          <button id="comprehend-btn">Comprehend Dao</button>
-          <button id="alchemy-btn">Refine Pills</button>
-          <button id="tribulation-btn">Face Tribulation</button>
-          <button id="rebirth-btn">Seek Rebirth</button>
+          <button id="cultivate-btn" aria-label="Gather Qi">Gather Qi</button>
+          <button id="comprehend-btn" aria-label="Comprehend Dao">Comprehend Dao</button>
+          <button id="alchemy-btn" disabled title="Feature coming soon">Refine Pills</button>
+          <button id="tribulation-btn" disabled title="Feature coming soon">Face Tribulation</button>
+          <button id="rebirth-btn" disabled title="Feature coming soon">Seek Rebirth</button>
         </div>
-        
+
         <div class="event-log" id="event-log">
           <h3>Cultivation Log</h3>
-          <div class="log-content"></div>
+          <div class="log-content" aria-live="polite"></div>
         </div>
       </section>
-      
+
       <section class="panel" id="sect-management">
         <h2>Sect Development</h2>
-        <div class="stat-row">
-          <span class="stat-name">Sect Name:</span>
-          <span id="sect-name" class="stat-value">Lonely Cultivator</span>
+        <div id="sect-info">
+          <div class="stat-row">
+            <span class="stat-name">Sect Name:</span>
+            <span id="sect-name" class="stat-value">Lonely Cultivator</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">Disciples:</span>
+            <span id="disciple-count" class="stat-value">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">Reputation:</span>
+            <span id="sect-reputation" class="stat-value">0</span>
+          </div>
         </div>
-        <div class="stat-row">
-          <span class="stat-name">Disciples:</span>
-          <span id="disciple-count" class="stat-value">0</span>
-        </div>
-        <div class="action-grid">
+        <div id="sect-actions" class="action-grid">
           <button id="recruit-btn">Recruit Disciple</button>
           <button id="train-btn">Train Disciples</button>
           <button id="expand-btn">Expand Sect</button>
         </div>
+        <p id="sect-prompt">Reach Foundation Establishment to found your sect.</p>
       </section>
     </main>
 
-    <!-- Right Sidebar - Stats and Systems -->
     <aside class="panel" id="game-systems">
       <section id="player-stats">
         <h2>Cultivator Stats</h2>
@@ -102,7 +116,7 @@
           <span id="karma-value" class="stat-value">0</span>
         </div>
       </section>
-      
+
       <section id="resources">
         <h2>Resources</h2>
         <div class="stat-row">
@@ -118,58 +132,60 @@
           <span id="pills-value" class="stat-value">0</span>
         </div>
       </section>
-      
+
       <section id="lore-section">
         <h2>Dao Knowledge</h2>
-        <button class="lore-btn" data-id="roots">Spiritual Roots</button>
-        <button class="lore-btn" data-id="qi">Qi Essence</button>
-        <button class="lore-btn" data-id="tribulations">Tribulations</button>
-        <button class="lore-btn" data-id="rebirth">Rebirth</button>
+        <button class="lore-btn" data-id="roots" disabled title="Coming soon">Spiritual Roots</button>
+        <button class="lore-btn" data-id="qi" disabled title="Coming soon">Qi Essence</button>
+        <button class="lore-btn" data-id="tribulations" disabled title="Coming soon">Tribulations</button>
+        <button class="lore-btn" data-id="rebirth" disabled title="Coming soon">Rebirth</button>
+        <div id="dao-insights-list"></div>
       </section>
     </aside>
 
     <footer class="panel" id="game-footer">
       <div class="version-info">
-        <span id="version">v2.5.1</span>
+        <span id="version">v2.5.2</span>
         <span id="last-saved">Last saved: Never</span>
       </div>
-      <button id="save-btn" onclick="window.forceSave()">Preserve Cultivation</button>
-      <button id="reset-btn" onclick="window.resetGame()">Reset Game</button>
+      <button id="save-btn" aria-label="Save game progress">Preserve Cultivation</button>
+      <button id="reset-btn" aria-label="Reset game">Reset Game</button>
     </footer>
   </div>
 
   <!-- Notification System -->
-  <div id="notification" class="notification"></div>
+  <div id="notification" class="notification" role="alert" aria-atomic="true"></div>
 
-  <!-- Lore Modal -->
-  <div id="lore-modal" class="modal">
+  <!-- Root Selection Modal -->
+  <div id="root-modal" class="modal" aria-hidden="true" aria-labelledby="root-modal-title">
     <div class="modal-content">
-      <span class="close-btn">&times;</span>
-      <h3 id="lore-title"></h3>
-      <p id="lore-text"></p>
-    </div>
-  </div>
-
-  <!-- Root Selection Modal (Initially hidden) -->
-  <div id="root-modal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h2>Choose Your Spiritual Root</h2>
-      <p>Your root determines your innate cultivation affinity</p>
+      <span class="close-btn" aria-label="Close modal">&times;</span>
+      <h2 id="root-modal-title">Choose Your Spiritual Root</h2>
+      <p>Your root determines your innate cultivation affinity. This choice is permanent for this playthrough.</p>
       <div class="root-options">
-        <button data-root="fire">Fire Root (+20% Qi)</button>
-        <button data-root="water">Water Root (Safer Meditation)</button>
-        <button data-root="wood">Wood Root (Spirit Growth)</button>
-        <button data-root="earth">Earth Root (Tribulation Resist)</button>
-        <button data-root="metal">Metal Root (Better Breakthroughs)</button>
+        <button data-root="fire" title="Enhanced Qi absorption through yang energy (+20% Qi Multiplier)">Fire Root</button>
+        <button data-root="water" title="Calm mind prevents cultivation deviation during meditation">Water Root</button>
+        <button data-root="wood" title="Natural connection enhances spirit growth over time (+0.01 Spirit/tick)">Wood Root</button>
+        <button data-root="earth" title="Steady progress resists tribulation damage during breakthrough">Earth Root</button>
+        <button data-root="metal" title="Strong foundations improve breakthrough success chance (+20% Breakthrough Chance)">Metal Root</button>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="game.js"></script>
-  <script src="cultivation.js"></script>
-  <script src="sect.js"></script>
-  <script src="dao.js"></script>
-  <script src="events.js"></script>
+  <!-- Lore Modal -->
+  <div id="lore-modal" class="modal" aria-hidden="true" aria-labelledby="lore-modal-title">
+    <div class="modal-content">
+      <span class="close-btn" aria-label="Close modal">&times;</span>
+      <h3 id="lore-modal-title"></h3>
+      <p id="lore-text"></p>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="game.js" defer></script>
+  <script src="cultivation.js" defer></script>
+  <script src="sect.js" defer></script>
+  <script src="dao.js" defer></script>
+  <script src="event.js" defer></script>
 </body>
 </html>
